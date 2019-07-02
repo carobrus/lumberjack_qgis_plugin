@@ -4,10 +4,10 @@ import time
 from osgeo import gdal
 from osgeo import ogr
 import numpy as np
-from classifier import Classifier
-import bands_algebra
-import filters
-import NDVI
+from .classifier import Classifier
+from . import bands_algebra
+from . import filters
+from . import ndvi
 
 
 def crop_and_merge(training_directory, tiff_extension_filename):
@@ -37,7 +37,10 @@ def crop_and_merge(training_directory, tiff_extension_filename):
                     ds = gdal.Open("{}/{}{}crop.tif".format(file.path, tiff_file[:-5], str(band_number)), gdal.GA_ReadOnly)
                     if (band_number == 1):
                         driver = gdal.GetDriverByName('GTiff')
-                        outRaster = driver.Create("{}/{}merged.tif".format(file.path, tiff_file[:-9]), ext_ds.RasterXSize, ext_ds.RasterYSize, 7, gdal.GDT_Int16)
+                        file_name = "{}/{}merged.tif".format(file.path, tiff_file[:-9])
+                        if os.path.exists(file_name):
+                            os.remove(file_name)
+                        outRaster = driver.Create(file_name, ext_ds.RasterXSize, ext_ds.RasterYSize, 7, gdal.GDT_Int16)
                         outRaster.SetGeoTransform(ext_ds.GetGeoTransform())
                         outRaster.SetProjection(ext_ds.GetProjection())
                     band_cropped = ds.GetRasterBand(1).ReadAsArray()
@@ -57,7 +60,7 @@ def calculate_features(training_directory):
                     # Calculate features
                     abs_path_tiff_file = "{}/{}".format(file.path, tiff_file)
                     bands_algebra.generate_algebra_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_alge.tif"))
-                    NDVI.generate_ndvi_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_ndvi.tif"))
+                    ndvi.generate_ndvi_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_ndvi.tif"))
                     filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"))
 
 
@@ -76,7 +79,9 @@ def stack_features(training_directory):
                     print("Creating file: {}{}".format(tiff_file[:-10], "stack.tif"))
                     dataset = gdal.Open(abs_path_tiff_file, gdal.GA_ReadOnly)
                     memory_driver = gdal.GetDriverByName('GTiff')
-                    out_raster_ds = memory_driver.Create(new_file_name, dataset.RasterXSize, dataset.RasterYSize, 19, gdal.GDT_Float32)
+                    if os.path.exists(new_file_name):
+                        os.remove(new_file_name)
+                    out_raster_ds = memory_driver.Create(new_file_name, dataset.RasterXSize, dataset.RasterYSize, 54, gdal.GDT_Float32)
                     out_raster_ds.SetProjection(dataset.GetProjectionRef())
                     out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
                     for band_number in range(dataset.RasterCount):
@@ -102,6 +107,8 @@ def rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_file):
     # Rasterize
     tiff_dataset = gdal.Open(tiff_file, gdal.GA_ReadOnly)
     memory_driver = gdal.GetDriverByName('GTiff')
+    if os.path.exists(rasterized_vector_file):
+        os.remove(rasterized_vector_file)
     out_raster_ds = memory_driver.Create(rasterized_vector_file, tiff_dataset.RasterXSize, tiff_dataset.RasterYSize, 1, gdal.GDT_Byte)
 
     # Set the ROI image's projection and extent to input raster's projection and extent
@@ -164,11 +171,11 @@ def predict(directory, classifier, prediction_result_img):
                     classifier.predict_an_image(file_name, prediction_result_img)
 
 
-def main():
+def execute():
     start_time = time.time()
 
     tiff_extension_file = "C:/Users/Carolina/Documents/Tesis/GeneralVillegas(4estaciones)/LC08_L1TP_228084_20160706_20170323_01_T1_sr_clipped.tif"
-    training_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141560"
+    training_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141560/Octubre"
 
     # crop_and_merge(training_directory, tiff_extension_file)
     # calculate_features(training_directory)
@@ -185,17 +192,17 @@ def main():
     classifier.fit_and_calculate_metrics()
 
 
-    prediction_result_img = "C:/Users/Carolina/Documents/Tesis/Pruebas/result.tif"
-    tiff_extension_file_to_predict = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/LC082250852018072301T1-SC20181114131415/LC08_L1TP_225085_20180723_20180731_01_T1_sr_band1_clipped.tif"
-    download_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571"
-    crop_and_merge(download_directory, tiff_extension_file_to_predict)
+    predict_result_img = "C:/Users/Carolina/Desktop/Test/result.tif"
+    tif_ext_file__pred = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Julio/LC082250852018072301T1-SC20181114131415/LC08_L1TP_225085_20180723_20180731_01_T1_sr_band1_clipped.tif"
+    download_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Septiembre"
+    crop_and_merge(download_directory, tif_ext_file__pred)
     calculate_features(download_directory)
     stack_features(download_directory)
-    predict(download_directory, classifier, prediction_result_img)
+    predict(download_directory, classifier, predict_result_img)
 
     elapsed_time = time.time() - start_time
     print("Finished in {} seconds".format(str(elapsed_time)))
 
 
 if __name__== "__main__":
-    main()
+    execute()

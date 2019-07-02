@@ -31,6 +31,7 @@ from .resources import *
 from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
+from . import main
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
@@ -197,6 +198,7 @@ class Lumberjack:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+            main.execute()
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass
