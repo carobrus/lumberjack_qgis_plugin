@@ -189,8 +189,7 @@ def execute():
 
     classifier = Classifier()
     add_samples(training_directory, classifier, rasterized_vector_file)
-    classifier.fit_and_calculate_metrics()
-
+    feature_importances = classifier.fit_and_calculate_metrics()
 
     predict_result_img = "C:/Users/Carolina/Desktop/Test/result.tif"
     tif_ext_file__pred = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Julio/LC082250852018072301T1-SC20181114131415/LC08_L1TP_225085_20180723_20180731_01_T1_sr_band1_clipped.tif"
@@ -203,6 +202,7 @@ def execute():
     elapsed_time = time.time() - start_time
     print("Finished in {} seconds".format(str(elapsed_time)))
 
+    return feature_importances
 
 if __name__== "__main__":
     execute()

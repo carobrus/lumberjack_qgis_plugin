@@ -65,6 +65,8 @@ class Classifier:
         print("Confusion Matrix")
         print(c_matrix)
 
+        return self.__rf.feature_importances_
+
 
     def predict_an_image(self, input_image, output_image):
         dataset = gdal.Open(input_image, gdal.GA_ReadOnly)
