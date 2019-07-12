@@ -41,10 +41,6 @@ def output_tiff(dataset, img_filtered, file_output):
     out_raster_ds = None
 
 
-def import_to_qgis(file_output, name_output):
-    iface.addRasterLayer(file_output, name_output)
-
-
 def generate_filter_file(file_input, file_output):
     start_time = time.time()
     print("Performing filters...")

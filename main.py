@@ -11,6 +11,10 @@ from . import ndvi
 
 
 def crop_and_merge(training_directory, tiff_extension_filename):
+    """
+    Crops all images in the directory according to a given file. Adds "crop" to the filename just before the extension.
+    It merges all the cropped images and creates a new file with the "merged" suffix.
+    """
     ext_ds = gdal.Open(tiff_extension_filename, gdal.GA_ReadOnly)
     # Get Extension
     geoTransform = ext_ds.GetGeoTransform()
@@ -27,10 +31,10 @@ def crop_and_merge(training_directory, tiff_extension_filename):
             outRaster = None
             outband = None
             # For each file whose name it's like *band_____
+            file_name = ""
             for tiff_file in os.listdir(file.path):
                 if (tiff_file[-9:-5] == "band"):
                     band_number += 1
-
                     print("Cropping Tiff file: {}".format(tiff_file))
                     # Crop image to extension
                     subprocess.call("gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}/{}\" \"{}/{}{}{}\"".format(minx, maxy, maxx, miny, file.path, tiff_file, file.path, tiff_file[:-5], str(band_number), "crop.tif"), stdout=open(os.devnull, 'wb'))
@@ -41,15 +45,17 @@ def crop_and_merge(training_directory, tiff_extension_filename):
                         if os.path.exists(file_name):
                             os.remove(file_name)
                         outRaster = driver.Create(file_name, ext_ds.RasterXSize, ext_ds.RasterYSize, 7, gdal.GDT_Int16)
+                        #print ("Creating file: " + file_name)
                         outRaster.SetGeoTransform(ext_ds.GetGeoTransform())
                         outRaster.SetProjection(ext_ds.GetProjection())
                     band_cropped = ds.GetRasterBand(1).ReadAsArray()
                     outband = outRaster.GetRasterBand(band_number)
                     outband.WriteArray(band_cropped)
+            print ("File created: " + file_name)
             outband.FlushCache()
 
 
-def calculate_features(training_directory):
+def calculate_features(training_directory, do_algebra, do_filters, do_ndvi):
     for file in os.scandir(training_directory):
         if (file.is_dir()):
             print("Directory: {}".format(file.path))
@@ -59,12 +65,25 @@ def calculate_features(training_directory):
                     print("Generating features to file: {}".format(tiff_file))
                     # Calculate features
                     abs_path_tiff_file = "{}/{}".format(file.path, tiff_file)
-                    bands_algebra.generate_algebra_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_alge.tif"))
-                    ndvi.generate_ndvi_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_ndvi.tif"))
-                    filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"))
+                    if do_algebra:
+                        bands_algebra.generate_algebra_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_alge.tif"))
+                    if do_ndvi:
+                        ndvi.generate_ndvi_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_ndvi.tif"))
+                    if do_filters:
+                        filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"))
 
 
-def stack_features(training_directory):
+def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures):
+    rasterCount = 7
+    if do_algebra:
+        rasterCount += 4
+    if do_filters:
+        rasterCount += 7
+    if do_ndvi:
+        rasterCount += 1
+    if do_textures:
+        rasterCount += 35
+
     for file in os.scandir(training_directory):
         if (file.is_dir()):
             print("Directory: {}".format(file.path))
@@ -81,7 +100,7 @@ def stack_features(training_directory):
                     memory_driver = gdal.GetDriverByName('GTiff')
                     if os.path.exists(new_file_name):
                         os.remove(new_file_name)
-                    out_raster_ds = memory_driver.Create(new_file_name, dataset.RasterXSize, dataset.RasterYSize, 54, gdal.GDT_Float32)
+                    out_raster_ds = memory_driver.Create(new_file_name, dataset.RasterXSize, dataset.RasterYSize, rasterCount, gdal.GDT_Float32)
                     out_raster_ds.SetProjection(dataset.GetProjectionRef())
                     out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
                     for band_number in range(dataset.RasterCount):
@@ -90,7 +109,7 @@ def stack_features(training_directory):
                         outband = out_raster_ds.GetRasterBand(band_total)
                         outband.WriteArray(band.ReadAsArray())
 
-                if (tiff_file[-15:-9] == "merged"):
+                if (tiff_file[-8:] == "alge.tif" and do_algebra) or (tiff_file[-8:] == "ndvi.tif" and do_ndvi) or (tiff_file[-8:] == "filt.tif" and do_filters) or (tiff_file[-8:] == "text.tif" and do_textures):
                     abs_path_tiff_file = "{}/{}".format(file.path, tiff_file)
                     dataset = gdal.Open(abs_path_tiff_file, gdal.GA_ReadOnly)
                     for band_number in range(dataset.RasterCount):
@@ -146,6 +165,7 @@ def add_samples(training_directory, classifier, rasterized_vector_file):
 
 
 def check_classes(rasterized_vector_file):
+    output = []
     roi_ds = gdal.Open(rasterized_vector_file, gdal.GA_ReadOnly)
     roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
 
@@ -153,10 +173,14 @@ def check_classes(rasterized_vector_file):
     # Iterate over all class labels in the ROI image, printing out some information
     for c in classes:
         print('Class {c} contains {n} pixels'.format(c=c, n=(roi == c).sum()))
+        output.append('Class {c} contains {n} pixels'.format(c=c, n=(roi == c).sum()))
 
     # Find how many non-zero entries there are
     n_samples = (roi > 0).sum()
     print('There are {n} samples'.format(n=n_samples))
+    output.append('There are {n} samples'.format(n=n_samples))
+
+    return output
 
 
 def predict(directory, classifier, prediction_result_img):
@@ -171,38 +195,41 @@ def predict(directory, classifier, prediction_result_img):
                     classifier.predict_an_image(file_name, prediction_result_img)
 
 
-def execute():
+def execute(training_directory, tiff_extension_file, vector_file_name,
+            do_algebra, do_filters, do_ndvi, do_textures, do_prediction,
+            prediction_directory, tiff_ext_file_prediction,
+            output_file):
+
     start_time = time.time()
+    result = []
 
-    tiff_extension_file = "C:/Users/Carolina/Documents/Tesis/GeneralVillegas(4estaciones)/LC08_L1TP_228084_20160706_20170323_01_T1_sr_clipped.tif"
-    training_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141560/Octubre"
+    # Files to be cropped according the tiff_extension_file (all layers to be cropped and merged)
+    crop_and_merge(training_directory, tiff_extension_file)
 
-    # crop_and_merge(training_directory, tiff_extension_file)
-    # calculate_features(training_directory)
-    # stack_features(training_directory)
+    calculate_features(training_directory, do_algebra, do_filters, do_ndvi)
 
-    vector_file_name = "C:/Users/Carolina/Documents/Tesis/GeneralVillegas(4estaciones)/roi.shp"
-    rasterized_vector_file = "C:/Users/Carolina/Documents/Tesis/GeneralVillegas(4estaciones)/roi.tif" #Rasterize
+    stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures)
+
+
+    rasterized_vector_file = vector_file_name[:-4] + ".tif" #Rasterize
 
     rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_extension_file)
-    check_classes(rasterized_vector_file)
+    classes_output = check_classes(rasterized_vector_file)
 
     classifier = Classifier()
     add_samples(training_directory, classifier, rasterized_vector_file)
-    feature_importances = classifier.fit_and_calculate_metrics()
+    output_classification = classifier.fit_and_calculate_metrics()
 
-    predict_result_img = "C:/Users/Carolina/Desktop/Test/result.tif"
-    tif_ext_file__pred = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Julio/LC082250852018072301T1-SC20181114131415/LC08_L1TP_225085_20180723_20180731_01_T1_sr_band1_clipped.tif"
-    download_directory = "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Septiembre"
-    crop_and_merge(download_directory, tif_ext_file__pred)
-    calculate_features(download_directory)
-    stack_features(download_directory)
-    predict(download_directory, classifier, predict_result_img)
+    if do_prediction:
+        crop_and_merge(prediction_directory, tiff_ext_file_prediction)
+        calculate_features(prediction_directory, do_algebra, do_filters, do_ndvi)
+        stack_features(prediction_directory, do_algebra, do_filters, do_ndvi, do_textures)
+        predict(prediction_directory, classifier, output_file)
 
     elapsed_time = time.time() - start_time
     print("Finished in {} seconds".format(str(elapsed_time)))
 
-    return feature_importances
+    return [output_classification, classes_output, "Finished in {} seconds".format(str(elapsed_time))]
 
 if __name__== "__main__":
     execute()

@@ -23,7 +23,8 @@
 """
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QFileDialog
+from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -35,12 +36,7 @@ from . import main
 
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-import random
+from .plot import PlotWindow
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
@@ -191,6 +187,53 @@ class Lumberjack:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def select_training_directory(self):
+        filename = QFileDialog.getExistingDirectory(self.dlg, "Select training directory","")
+        self.dlg.lineEdit_trainingDirectory.setText(filename)
+
+    def select_input_layer(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select input layer","","*.tif; *.tiff")
+        self.dlg.lineEdit_inputLayer.setText(filename[0])
+
+    def select_vector_file(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select vector file","","*.shp")
+        self.dlg.lineEdit_vectorFile.setText(filename[0])
+
+    def select_output_file(self):
+        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","","*.tif; *.tiff")
+        self.dlg.lineEdit_outputFile.setText(filename[0])
+
+    def select_prediction_directory(self):
+        filename = QFileDialog.getExistingDirectory(self.dlg, "Select prediction directory","")
+        self.dlg.lineEdit_predictionDirectoy.setText(filename)
+
+    def select_input_layer_prediction(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select input layer","","*.tif; *.tiff")
+        self.dlg.lineEdit_inputLayerPrediction.setText(filename[0])
+
+    def toggle_predicting_image(self, state):
+        if state > 0:
+            self.dlg.label_imageDirectory.setEnabled(True)
+            self.dlg.lineEdit_predictionDirectoy.setEnabled(True)
+            self.dlg.pushButton_predictionDirectory.setEnabled(True)
+            self.dlg.label_inputLayerPrediction.setEnabled(True)
+            self.dlg.lineEdit_inputLayerPrediction.setEnabled(True)
+            self.dlg.pushButton_inputLayerPrediction.setEnabled(True)
+            self.dlg.label_outputFile.setEnabled(True)
+            self.dlg.lineEdit_outputFile.setEnabled(True)
+            self.dlg.pushButton_outputFile.setEnabled(True)
+            self.dlg.checkBox_addFile.setEnabled(True)
+        else:
+            self.dlg.label_imageDirectory.setEnabled(False)
+            self.dlg.lineEdit_predictionDirectoy.setEnabled(False)
+            self.dlg.pushButton_predictionDirectory.setEnabled(False)
+            self.dlg.label_inputLayerPrediction.setEnabled(False)
+            self.dlg.lineEdit_inputLayerPrediction.setEnabled(False)
+            self.dlg.pushButton_inputLayerPrediction.setEnabled(False)
+            self.dlg.label_outputFile.setEnabled(False)
+            self.dlg.lineEdit_outputFile.setEnabled(False)
+            self.dlg.pushButton_outputFile.setEnabled(False)
+            self.dlg.checkBox_addFile.setEnabled(False)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -201,59 +244,63 @@ class Lumberjack:
             self.first_start = False
             self.dlg = LumberjackDialog()
 
+        self.dlg.lineEdit_trainingDirectory.clear()
+        self.dlg.pushButton_trainingDirectory.clicked.connect(self.select_training_directory)
+
+        self.dlg.lineEdit_inputLayer.clear()
+        self.dlg.pushButton_inputLayer.clicked.connect(self.select_input_layer)
+
+        self.dlg.lineEdit_vectorFile.clear()
+        self.dlg.pushButton_vectorFile.clicked.connect(self.select_vector_file)
+
+        self.dlg.lineEdit_predictionDirectoy.clear()
+        self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
+
+        self.dlg.lineEdit_inputLayerPrediction.clear()
+        self.dlg.pushButton_inputLayerPrediction.clicked.connect(self.select_input_layer_prediction)
+
+        self.dlg.lineEdit_outputFile.clear()
+        self.dlg.pushButton_outputFile.clicked.connect(self.select_output_file)
+
+        self.dlg.checkBox_prediction.stateChanged.connect(self.toggle_predicting_image)
+
+        # parameters
+        self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101")
+        self.dlg.lineEdit_inputLayer.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101/LC082280842018030601T1-SC20190705123232/LC08_L1TP_228084_20180306_20180319_01_T1_sr_band1_clipped.tif")
+        self.dlg.lineEdit_vectorFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/roiGralVillegas.shp")
+        self.dlg.lineEdit_predictionDirectoy.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero")
+        self.dlg.lineEdit_inputLayerPrediction.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero/LC082250852018012801T1-SC20181114130831/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1_clipped.tif")
+        self.dlg.lineEdit_outputFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/result.tif")
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            self.feature_importances = main.execute()
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
+            self.output = main.execute(
+                training_directory = self.dlg.lineEdit_trainingDirectory.text(),
+                tiff_extension_file = self.dlg.lineEdit_inputLayer.text(),
+                vector_file_name = self.dlg.lineEdit_vectorFile.text(),
+                do_algebra = self.dlg.checkBox_bandsAlgebra.isChecked(),
+                do_filters = self.dlg.checkBox_medianFilter.isChecked(),
+                do_ndvi = self.dlg.checkBox_ndvi.isChecked(),
+                do_textures =  self.dlg.checkBox_textures.isChecked(),
+                do_prediction = self.dlg.checkBox_prediction.isChecked(),
+                prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
+                tiff_ext_file_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
+                output_file = self.dlg.lineEdit_outputFile.text()
+            )
 
-            self.plotWindow = PlotWindow(self.dlg, feature_importances=self.feature_importances)
+            for i in self.output[1]:
+                self.dlg.plainTextEdit.appendPlainText(str(i))
+            for i in self.output[0][:-1]:
+                self.dlg.plainTextEdit.appendPlainText(str(i))
+            self.dlg.plainTextEdit.appendPlainText(self.output[2])
+            self.dlg.plainTextEdit.appendPlainText("")
+
+            self.plotWindow = PlotWindow(self.dlg, feature_importances=self.output[0][-1])
             self.plotWindow.show()
 
-
-class PlotWindow(QMainWindow):
-
-    def __init__(self, parent=None, feature_importances=None):
-        super(PlotWindow, self).__init__(parent)
-
-        self.title = 'Feature Importances'
-        self.width = 640
-        self.height = 640
-        self.feature_importances = feature_importances
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.resize(self.width,self.height)
-
-        m = PlotCanvas(self, width=5, height=4, feature_importances=self.feature_importances)
-        m.move(0,0)
-
-        self.show()
-
-class PlotCanvas(FigureCanvas):
-
-    def __init__(self, parent=None, width=5, height=4, dpi=100, feature_importances=None):
-        fig = Figure(dpi=dpi)
-        fig.tight_layout()
-        self.axes = fig.add_subplot(111)
-        self.feature_importances = feature_importances
-        FigureCanvas.__init__(self, fig)
-        self.setParent(parent)
-
-        FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry(self)
-        self.plot()
-
-
-    def plot(self):
-        data = self.feature_importances
-        y = list(range(1, len(data)+1))
-        ax = self.figure.add_subplot(111)
-        ax.bar(y, data)
-        ax.set_title('Features Importance')
-        self.draw()
+            if (self.dlg.checkBox_addFile.isChecked()):
+                iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")

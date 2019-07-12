@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE qgisgrassmodule SYSTEM "http://mrcc.com/qgisgrassmodule.dtd">
+<qgisgrassmodule label="Compute asm, contrast, var, idm and entr for each band of a TIFF file" module="r.out.haralickFeatures">
+	<file key="input" />
+	<option key="size" answer="3" type="integer" />
+	<option key="distance" answer="1" type="integer" />
+	<option key="categories" answer="255" type="integer" />
+	<flag key="r" answer="off" />
+	<file key="output" type="new" filters="Geo TIFF (*.tif *.tiff)"/>
+</qgisgrassmodule>

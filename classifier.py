@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
 from osgeo import gdal
 from osgeo import gdal_array
 from osgeo import ogr
@@ -39,6 +40,7 @@ class Classifier:
 
 
     def fit_and_calculate_metrics(self):
+        output = []
         X_train, X_test, y_train, y_test = train_test_split(self.__X, self.__y)
         print("X_train matrix is sized: {size}".format(size=X_train.shape))
         print("y_train array is sized: {size}".format(size=y_train.shape))
@@ -55,17 +57,25 @@ class Classifier:
 
         #  Score of the training dataset obtained using an out-of-bag estimate.
         print("The OOB prediction of accuracy is: {}%".format(self.__rf.oob_score_ * 100))
+        output.append("The OOB prediction of accuracy is: {}%".format(self.__rf.oob_score_ * 100))
 
         for index, imp in enumerate(self.__rf.feature_importances_):
             print('Feature {:>4} importance: {}'.format(index+1, imp))
 
-        c_matrix = confusion_matrix(y_test, self.__rf.predict(X_test), labels=[1,2])
+        y_pred = self.__rf.predict(X_test)
+        c_matrix = confusion_matrix(y_test, y_pred, labels=[1,2])
 
         print("")
-        print("Confusion Matrix")
+        print("Confusion Matrix: ")
         print(c_matrix)
+        output.append("Confusion Matrix: ")
+        output.append(c_matrix)
 
-        return self.__rf.feature_importances_
+        print("F1 Score: " + str(f1_score(y_test, y_pred)))
+        output.append("F1 Score: " + str(f1_score(y_test, y_pred)))
+
+        output.append(self.__rf.feature_importances_)
+        return output
 
 
     def predict_an_image(self, input_image, output_image):
