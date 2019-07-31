@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import datetime
 from osgeo import gdal
 from osgeo import ogr
 import numpy as np
@@ -42,8 +43,8 @@ def crop_and_merge(training_directory, tiff_extension_filename):
                     if (band_number == 1):
                         driver = gdal.GetDriverByName('GTiff')
                         file_name = "{}/{}merged.tif".format(file.path, tiff_file[:-9])
-                        if os.path.exists(file_name):
-                            os.remove(file_name)
+                        # if os.path.exists(file_name):
+                            # os.remove(file_name)
                         outRaster = driver.Create(file_name, ext_ds.RasterXSize, ext_ds.RasterYSize, 7, gdal.GDT_Int16)
                         #print ("Creating file: " + file_name)
                         outRaster.SetGeoTransform(ext_ds.GetGeoTransform())
@@ -70,7 +71,7 @@ def calculate_features(training_directory, do_algebra, do_filters, do_ndvi):
                     if do_ndvi:
                         ndvi.generate_ndvi_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_ndvi.tif"))
                     if do_filters:
-                        filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"))
+                        filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"), "{}/{}{}".format(file.path, tiff_file[:-4], "_gaus.tif"))
 
 
 def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures):
@@ -78,7 +79,7 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
     if do_algebra:
         rasterCount += 4
     if do_filters:
-        rasterCount += 7
+        rasterCount += 14
     if do_ndvi:
         rasterCount += 1
     if do_textures:
@@ -109,7 +110,7 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
                         outband = out_raster_ds.GetRasterBand(band_total)
                         outband.WriteArray(band.ReadAsArray())
 
-                if (tiff_file[-8:] == "alge.tif" and do_algebra) or (tiff_file[-8:] == "ndvi.tif" and do_ndvi) or (tiff_file[-8:] == "filt.tif" and do_filters) or (tiff_file[-8:] == "text.tif" and do_textures):
+                if (tiff_file[-8:] == "alge.tif" and do_algebra) or (tiff_file[-8:] == "ndvi.tif" and do_ndvi) or (tiff_file[-8:] == "filt.tif" and do_filters) or (tiff_file[-8:] == "gaus.tif" and do_filters) or (tiff_file[-8:] == "text.tif" and do_textures):
                     abs_path_tiff_file = "{}/{}".format(file.path, tiff_file)
                     dataset = gdal.Open(abs_path_tiff_file, gdal.GA_ReadOnly)
                     for band_number in range(dataset.RasterCount):
@@ -183,7 +184,7 @@ def check_classes(rasterized_vector_file):
     return output
 
 
-def predict(directory, classifier, prediction_result_img):
+def predict(directory, classifier, prediction_result_img, rasterized_training_roi):
     for file in os.scandir(directory):
         if (file.is_dir()):
             print("Directory: {}".format(file.path))
@@ -192,44 +193,57 @@ def predict(directory, classifier, prediction_result_img):
                 if (tiff_file[-9:] == "stack.tif"):
                     print("File: {}".format(tiff_file))
                     file_name = "{}/{}".format(file.path, tiff_file)
-                    classifier.predict_an_image(file_name, prediction_result_img)
-
+                    output = classifier.predict_an_image(file_name, prediction_result_img, rasterized_training_roi)
+    return output
 
 def execute(training_directory, tiff_extension_file, vector_file_name,
             do_algebra, do_filters, do_ndvi, do_textures, do_prediction,
-            prediction_directory, tiff_ext_file_prediction,
+            prediction_directory, tiff_ext_file_prediction, use_training_roi, vector_training_roi,
             output_file):
 
-    start_time = time.time()
-    result = []
+    start_time = str(datetime.datetime.now())
+    print("============================= " + start_time + " =============================")
 
+    start_time = time.time()
+
+    # Prepares training
     # Files to be cropped according the tiff_extension_file (all layers to be cropped and merged)
     crop_and_merge(training_directory, tiff_extension_file)
-
     calculate_features(training_directory, do_algebra, do_filters, do_ndvi)
-
     stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures)
 
-
+    # Creates ROI for training
     rasterized_vector_file = vector_file_name[:-4] + ".tif" #Rasterize
-
+    print("Creating ROI: " + rasterized_vector_file)
     rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_extension_file)
-    classes_output = check_classes(rasterized_vector_file)
+    classes_output_training = check_classes(rasterized_vector_file)
 
     classifier = Classifier()
     add_samples(training_directory, classifier, rasterized_vector_file)
-    output_classification = classifier.fit_and_calculate_metrics()
 
+    output_classification = None
+    if ((not do_prediction) or (do_prediction and not use_training_roi)):
+        output_classification = classifier.fit_and_calculate_metrics(0.25)
+
+    classes_output = None
     if do_prediction:
+        # Calculate features for the other image
         crop_and_merge(prediction_directory, tiff_ext_file_prediction)
         calculate_features(prediction_directory, do_algebra, do_filters, do_ndvi)
         stack_features(prediction_directory, do_algebra, do_filters, do_ndvi, do_textures)
-        predict(prediction_directory, classifier, output_file)
+        rasterized_training_roi = vector_training_roi[:-4] + ".tif" #Rasterize
+        print("Creating ROI: " + rasterized_training_roi)
+        rasterize_vector_file(vector_training_roi, rasterized_training_roi, tiff_ext_file_prediction)
+        classes_output = check_classes(rasterized_training_roi)
+
+        if use_training_roi:
+            output_classification = classifier.fit_and_calculate_metrics(0.0)
+        output_classification = predict(prediction_directory, classifier, output_file, rasterized_training_roi)
 
     elapsed_time = time.time() - start_time
     print("Finished in {} seconds".format(str(elapsed_time)))
 
-    return [output_classification, classes_output, "Finished in {} seconds".format(str(elapsed_time))]
+    return [output_classification, classes_output_training, classes_output, start_time, "Finished in {} seconds".format(str(elapsed_time))]
 
 if __name__== "__main__":
     execute()

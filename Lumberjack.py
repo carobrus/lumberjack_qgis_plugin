@@ -25,6 +25,7 @@ from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog
 from qgis.utils import iface
+from qgis.core import Qgis
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -211,6 +212,10 @@ class Lumberjack:
         filename = QFileDialog.getOpenFileName(self.dlg, "Select input layer","","*.tif; *.tiff")
         self.dlg.lineEdit_inputLayerPrediction.setText(filename[0])
 
+    def select_roi_testing(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select vector file","","*.shp")
+        self.dlg.lineEdit_vector_file_testing.setText(filename[0])
+
     def toggle_predicting_image(self, state):
         if state > 0:
             self.dlg.label_imageDirectory.setEnabled(True)
@@ -223,6 +228,13 @@ class Lumberjack:
             self.dlg.lineEdit_outputFile.setEnabled(True)
             self.dlg.pushButton_outputFile.setEnabled(True)
             self.dlg.checkBox_addFile.setEnabled(True)
+            self.dlg.checkBox_testing.setEnabled(True)
+            if self.dlg.checkBox_testing.isChecked():
+                self.dlg.lineEdit_vector_file_testing.setEnabled(True)
+                self.dlg.pushButton_roi_testing.setEnabled(True)
+            else:
+                self.dlg.lineEdit_vector_file_testing.setEnabled(False)
+                self.dlg.pushButton_roi_testing.setEnabled(False)
         else:
             self.dlg.label_imageDirectory.setEnabled(False)
             self.dlg.lineEdit_predictionDirectoy.setEnabled(False)
@@ -234,6 +246,17 @@ class Lumberjack:
             self.dlg.lineEdit_outputFile.setEnabled(False)
             self.dlg.pushButton_outputFile.setEnabled(False)
             self.dlg.checkBox_addFile.setEnabled(False)
+            self.dlg.checkBox_testing.setEnabled(False)
+            self.dlg.lineEdit_vector_file_testing.setEnabled(False)
+            self.dlg.pushButton_roi_testing.setEnabled(False)
+
+    def toggle_testing(self, state):
+        if state > 0:
+            self.dlg.lineEdit_vector_file_testing.setEnabled(True)
+            self.dlg.pushButton_roi_testing.setEnabled(True)
+        else:
+            self.dlg.lineEdit_vector_file_testing.setEnabled(False)
+            self.dlg.pushButton_roi_testing.setEnabled(False)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -244,33 +267,39 @@ class Lumberjack:
             self.first_start = False
             self.dlg = LumberjackDialog()
 
-        self.dlg.lineEdit_trainingDirectory.clear()
-        self.dlg.pushButton_trainingDirectory.clicked.connect(self.select_training_directory)
+            self.dlg.lineEdit_trainingDirectory.clear()
+            self.dlg.pushButton_trainingDirectory.clicked.connect(self.select_training_directory)
 
-        self.dlg.lineEdit_inputLayer.clear()
-        self.dlg.pushButton_inputLayer.clicked.connect(self.select_input_layer)
+            self.dlg.lineEdit_inputLayer.clear()
+            self.dlg.pushButton_inputLayer.clicked.connect(self.select_input_layer)
 
-        self.dlg.lineEdit_vectorFile.clear()
-        self.dlg.pushButton_vectorFile.clicked.connect(self.select_vector_file)
+            self.dlg.lineEdit_vectorFile.clear()
+            self.dlg.pushButton_vectorFile.clicked.connect(self.select_vector_file)
 
-        self.dlg.lineEdit_predictionDirectoy.clear()
-        self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
+            self.dlg.lineEdit_predictionDirectoy.clear()
+            self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
 
-        self.dlg.lineEdit_inputLayerPrediction.clear()
-        self.dlg.pushButton_inputLayerPrediction.clicked.connect(self.select_input_layer_prediction)
+            self.dlg.lineEdit_inputLayerPrediction.clear()
+            self.dlg.pushButton_inputLayerPrediction.clicked.connect(self.select_input_layer_prediction)
 
-        self.dlg.lineEdit_outputFile.clear()
-        self.dlg.pushButton_outputFile.clicked.connect(self.select_output_file)
+            self.dlg.lineEdit_outputFile.clear()
+            self.dlg.pushButton_outputFile.clicked.connect(self.select_output_file)
 
-        self.dlg.checkBox_prediction.stateChanged.connect(self.toggle_predicting_image)
+            self.dlg.checkBox_prediction.stateChanged.connect(self.toggle_predicting_image)
 
-        # parameters
-        self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101")
-        self.dlg.lineEdit_inputLayer.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101/LC082280842018030601T1-SC20190705123232/LC08_L1TP_228084_20180306_20180319_01_T1_sr_band1_clipped.tif")
-        self.dlg.lineEdit_vectorFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/roiGralVillegas.shp")
-        self.dlg.lineEdit_predictionDirectoy.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero")
-        self.dlg.lineEdit_inputLayerPrediction.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero/LC082250852018012801T1-SC20181114130831/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1_clipped.tif")
-        self.dlg.lineEdit_outputFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/result.tif")
+            self.dlg.checkBox_testing.stateChanged.connect(self.toggle_testing)
+
+            self.dlg.lineEdit_vector_file_testing.clear()
+            self.dlg.pushButton_roi_testing.clicked.connect(self.select_roi_testing)
+
+            # parameters
+            self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101")
+            self.dlg.lineEdit_inputLayer.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/espa-bruscantinic@gmail.com-0101907052101/LC082280842018030601T1-SC20190705123232/LC08_L1TP_228084_20180306_20180319_01_T1_sr_band1_clipped.tif")
+            self.dlg.lineEdit_vectorFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/roiGralVillegas.shp")
+            self.dlg.lineEdit_predictionDirectoy.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero")
+            self.dlg.lineEdit_inputLayerPrediction.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101811141571/Enero/LC082250852018012801T1-SC20181114130831/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1_clipped.tif")
+            self.dlg.lineEdit_vector_file_testing.setText("C:/Users/Carolina/Desktop/LasFloresROI/LasFloresRoi12.shp")
+            self.dlg.lineEdit_outputFile.setText("C:/Users/Carolina/Desktop/GralVillegasMarzo/result.tif")
 
         # show the dialog
         self.dlg.show()
@@ -278,7 +307,7 @@ class Lumberjack:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            self.output = main.execute(
+            output_classification, ct, co, start_time, end_time = main.execute(
                 training_directory = self.dlg.lineEdit_trainingDirectory.text(),
                 tiff_extension_file = self.dlg.lineEdit_inputLayer.text(),
                 vector_file_name = self.dlg.lineEdit_vectorFile.text(),
@@ -289,18 +318,28 @@ class Lumberjack:
                 do_prediction = self.dlg.checkBox_prediction.isChecked(),
                 prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
                 tiff_ext_file_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
+                use_training_roi = self.dlg.checkBox_testing.isChecked(),
+                vector_training_roi = self.dlg.lineEdit_vector_file_testing.text(),
                 output_file = self.dlg.lineEdit_outputFile.text()
             )
 
-            for i in self.output[1]:
+            self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
+            self.dlg.plainTextEdit.appendPlainText("Classes when training:")
+            for i in ct:
+                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+            if co is not None:
+                self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+                for i in co:
+                    self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+            for i in output_classification[:-1]:
                 self.dlg.plainTextEdit.appendPlainText(str(i))
-            for i in self.output[0][:-1]:
-                self.dlg.plainTextEdit.appendPlainText(str(i))
-            self.dlg.plainTextEdit.appendPlainText(self.output[2])
+            self.dlg.plainTextEdit.appendPlainText(end_time)
             self.dlg.plainTextEdit.appendPlainText("")
 
-            self.plotWindow = PlotWindow(self.dlg, feature_importances=self.output[0][-1])
+            self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
             self.plotWindow.show()
 
-            if (self.dlg.checkBox_addFile.isChecked()):
-                iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
+            if self.dlg.checkBox_prediction.isChecked():
+                self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
+                if self.dlg.checkBox_addFile.isChecked():
+                    self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
