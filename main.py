@@ -9,6 +9,7 @@ from .classifier import Classifier
 from . import bands_algebra
 from . import filters
 from . import ndvi
+from . import threshold
 
 
 def crop_and_merge(training_directory, tiff_extension_filename):
@@ -244,6 +245,11 @@ def execute(training_directory, tiff_extension_file, vector_file_name,
     print("Finished in {} seconds".format(str(elapsed_time)))
 
     return [output_classification, classes_output_training, classes_output, start_time, "Finished in {} seconds".format(str(elapsed_time))]
+
+
+def calculate_threshold():
+    return threshold.calculate_threshold()
+
 
 if __name__== "__main__":
     execute()

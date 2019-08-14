@@ -38,6 +38,7 @@ from . import main
 import sys
 
 from .plot import PlotWindow
+from .plotbox import PlotWindow as PlotboxWindow
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
@@ -307,39 +308,45 @@ class Lumberjack:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            output_classification, ct, co, start_time, end_time = main.execute(
-                training_directory = self.dlg.lineEdit_trainingDirectory.text(),
-                tiff_extension_file = self.dlg.lineEdit_inputLayer.text(),
-                vector_file_name = self.dlg.lineEdit_vectorFile.text(),
-                do_algebra = self.dlg.checkBox_bandsAlgebra.isChecked(),
-                do_filters = self.dlg.checkBox_medianFilter.isChecked(),
-                do_ndvi = self.dlg.checkBox_ndvi.isChecked(),
-                do_textures =  self.dlg.checkBox_textures.isChecked(),
-                do_prediction = self.dlg.checkBox_prediction.isChecked(),
-                prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
-                tiff_ext_file_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
-                use_training_roi = self.dlg.checkBox_testing.isChecked(),
-                vector_training_roi = self.dlg.lineEdit_vector_file_testing.text(),
-                output_file = self.dlg.lineEdit_outputFile.text()
-            )
+            # output_classification, ct, co, start_time, end_time = main.execute(
+            #     training_directory = self.dlg.lineEdit_trainingDirectory.text(),
+            #     tiff_extension_file = self.dlg.lineEdit_inputLayer.text(),
+            #     vector_file_name = self.dlg.lineEdit_vectorFile.text(),
+            #     do_algebra = self.dlg.checkBox_bandsAlgebra.isChecked(),
+            #     do_filters = self.dlg.checkBox_medianFilter.isChecked(),
+            #     do_ndvi = self.dlg.checkBox_ndvi.isChecked(),
+            #     do_textures =  self.dlg.checkBox_textures.isChecked(),
+            #     do_prediction = self.dlg.checkBox_prediction.isChecked(),
+            #     prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
+            #     tiff_ext_file_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
+            #     use_training_roi = self.dlg.checkBox_testing.isChecked(),
+            #     vector_training_roi = self.dlg.lineEdit_vector_file_testing.text(),
+            #     output_file = self.dlg.lineEdit_outputFile.text()
+            # )
+            #
+            # self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
+            # self.dlg.plainTextEdit.appendPlainText("Classes when training:")
+            # for i in ct:
+            #     self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+            # if co is not None:
+            #     self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+            #     for i in co:
+            #         self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+            # for i in output_classification[:-1]:
+            #     self.dlg.plainTextEdit.appendPlainText(str(i))
+            # self.dlg.plainTextEdit.appendPlainText(end_time)
+            # self.dlg.plainTextEdit.appendPlainText("")
+            #
+            # self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
+            # self.plotWindow.show()
+            #
+            # if self.dlg.checkBox_prediction.isChecked():
+            #     self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
+            #     if self.dlg.checkBox_addFile.isChecked():
+            #         self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
 
-            self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
-            self.dlg.plainTextEdit.appendPlainText("Classes when training:")
-            for i in ct:
-                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-            if co is not None:
-                self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
-                for i in co:
-                    self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-            for i in output_classification[:-1]:
-                self.dlg.plainTextEdit.appendPlainText(str(i))
-            self.dlg.plainTextEdit.appendPlainText(end_time)
-            self.dlg.plainTextEdit.appendPlainText("")
-
-            self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
-            self.plotWindow.show()
-
-            if self.dlg.checkBox_prediction.isChecked():
-                self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
-                if self.dlg.checkBox_addFile.isChecked():
-                    self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
+            data_plotbox = main.calculate_threshold()
+            print(str(data_plotbox.shape))
+            print(str(data_plotbox[:,0:7].shape))
+            self.plotboxWindow = PlotboxWindow(self.dlg, data=data_plotbox[:,0:7])
+            self.plotboxWindow.show()
