@@ -33,61 +33,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_features">
-       <property name="text">
-        <string>Features</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_bandsAlgebra">
-       <property name="text">
-        <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_medianFilter">
-       <property name="text">
-        <string>Median and Gaussian Filter</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_ndvi">
-       <property name="text">
-        <string>NDVI</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_textures">
-       <property name="text">
-        <string>Textures</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="23" column="0">
+   <item row="25" column="0">
     <layout class="QVBoxLayout" name="verticalLayout_6">
      <item>
       <widget class="QDialogButtonBox" name="button_box">
@@ -142,35 +88,57 @@
      </item>
     </layout>
    </item>
-   <item row="2" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_4">
+   <item row="3" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0">
      <property name="spacing">
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label_vectorFile">
+      <widget class="QLabel" name="label_features">
        <property name="text">
-        <string>Vector File</string>
+        <string>Features</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QLineEdit" name="lineEdit_vectorFile">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_vectorFile">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <widget class="QCheckBox" name="checkBox_bandsAlgebra">
+       <property name="text">
+        <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_medianFilter">
+       <property name="text">
+        <string>Median and Gaussian Filter</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_ndvi">
+       <property name="text">
+        <string>NDVI</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_textures">
+       <property name="text">
+        <string>Textures</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -178,18 +146,6 @@
     <widget class="QCheckBox" name="checkBox_prediction">
      <property name="text">
       <string>Predict for another image</string>
-     </property>
-    </widget>
-   </item>
-   <item row="17" column="0">
-    <widget class="QPlainTextEdit" name="plainTextEdit">
-     <property name="font">
-      <font>
-       <family>Courier New</family>
-      </font>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -216,38 +172,6 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_trainingDirectory">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </item>
-   <item row="1" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_inputLayer">
-       <property name="text">
-        <string>Input Layer to Clip Raster by Extent</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QLineEdit" name="lineEdit_inputLayer">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_inputLayer">
          <property name="text">
           <string>...</string>
          </property>
@@ -349,7 +273,90 @@
      </item>
     </layout>
    </item>
-   <item row="12" column="0">
+   <item row="2" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_vectorFile">
+       <property name="text">
+        <string>Vector File</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_vectorFile">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_vectorFile">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="19" column="0">
+    <widget class="QPlainTextEdit" name="plainTextEdit">
+     <property name="font">
+      <font>
+       <family>Courier New</family>
+      </font>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_inputLayer">
+       <property name="text">
+        <string>Input Layer to Clip Raster by Extent</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_inputLayer">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_inputLayer">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="17" column="0">
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="18" column="0">
     <layout class="QVBoxLayout" name="verticalLayout_9">
      <property name="spacing">
       <number>0</number>
@@ -360,7 +367,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Test with this Vector File</string>
+        <string>Test with this Vector File (otherwise use training image 75-25)</string>
        </property>
       </widget>
      </item>

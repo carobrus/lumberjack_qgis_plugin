@@ -56,7 +56,7 @@ class Classifier:
 
         # Initializes model with 500 trees
         # self.__rf = RandomForestClassifier(n_estimators=500, oob_score=True, n_jobs=-1)
-        self.__rf = RandomForestClassifier(n_estimators=500, oob_score=True)
+        self.__rf = RandomForestClassifier(n_estimators=100, oob_score=True, bootstrap=False)
 
         print("Fitting model to training data...")
         # Build a forest of trees from the training set (X, y).
