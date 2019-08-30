@@ -145,6 +145,7 @@ def rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_file):
     layer = vector_dataset.GetLayerByIndex(0)
     # Rasterize the shapefile layer to our new dataset
     status = gdal.RasterizeLayer(out_raster_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
+
     # Close dataset
     out_raster_ds = None
 
@@ -166,6 +167,18 @@ def add_samples(training_directory, classifier, rasterized_vector_file):
                     classifier.add_samples(file_name, rasterized_vector_file)
 
 
+def add_test_samples(training_directory, classifier, rasterized_vector_file):
+    for file in os.scandir(training_directory):
+        if (file.is_dir()):
+            print("Directory: {}".format(file.path))
+            # For each file whose name it's like *band_____
+            for tiff_file in os.listdir(file.path):
+                if (tiff_file[-9:] == "stack.tif"):
+                    print("File: {}".format(tiff_file))
+                    file_name = "{}/{}".format(file.path, tiff_file)
+                    classifier.add_test_samples(file_name, rasterized_vector_file)
+
+
 def check_classes(rasterized_vector_file):
     output = []
     roi_ds = gdal.Open(rasterized_vector_file, gdal.GA_ReadOnly)
@@ -185,7 +198,7 @@ def check_classes(rasterized_vector_file):
     return output
 
 
-def predict(directory, classifier, prediction_result_img, rasterized_training_roi):
+def predict(directory, classifier, prediction_result_img):
     for file in os.scandir(directory):
         if (file.is_dir()):
             print("Directory: {}".format(file.path))
@@ -194,17 +207,17 @@ def predict(directory, classifier, prediction_result_img, rasterized_training_ro
                 if (tiff_file[-9:] == "stack.tif"):
                     print("File: {}".format(tiff_file))
                     file_name = "{}/{}".format(file.path, tiff_file)
-                    output = classifier.predict_an_image(file_name, prediction_result_img, rasterized_training_roi)
-    return output
+                    classifier.predict_an_image(file_name, prediction_result_img)
+
 
 def execute(training_directory, tiff_extension_file, vector_file_name,
-            do_algebra, do_filters, do_ndvi, do_textures, do_prediction,
-            prediction_directory, tiff_ext_file_prediction, use_training_roi, vector_training_roi,
+            do_algebra, do_filters, do_ndvi, do_textures, do_testing,
+            testing_directory, extension_testing, vector_testing_roi,
+            do_prediction, prediction_directory, extension_prediction,
             output_file):
 
-    start_time = str(datetime.datetime.now())
-    print("============================= " + start_time + " =============================")
-
+    start_time_str = str(datetime.datetime.now())
+    print("============================= " + start_time_str + " =============================")
     start_time = time.time()
 
     # Prepares training
@@ -217,34 +230,42 @@ def execute(training_directory, tiff_extension_file, vector_file_name,
     rasterized_vector_file = vector_file_name[:-4] + ".tif" #Rasterize
     print("Creating ROI: " + rasterized_vector_file)
     rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_extension_file)
-    classes_output_training = check_classes(rasterized_vector_file)
+    classes_training = check_classes(rasterized_vector_file)
 
+    # Create classifier and add samples to train
     classifier = Classifier()
     add_samples(training_directory, classifier, rasterized_vector_file)
 
-    output_classification = None
-    if ((not do_prediction) or (do_prediction and not use_training_roi)):
-        output_classification = classifier.fit_and_calculate_metrics(0.25)
-
     classes_output = None
+    if (do_testing):
+        # Calculate features for testing files
+        crop_and_merge(testing_directory, extension_testing)
+        calculate_features(testing_directory, do_algebra, do_filters, do_ndvi)
+        stack_features(testing_directory, do_algebra, do_filters, do_ndvi, do_textures)
+
+        # Creates ROI for testing
+        rasterized_vector_testing = vector_testing_roi[:-4] + ".tif" #Rasterize
+        print("Creating ROI: " + rasterized_vector_testing)
+        rasterize_vector_file(vector_testing_roi, rasterized_vector_testing, extension_testing)
+        classes_output = check_classes(rasterized_vector_testing)
+
+        add_test_samples(testing_directory, classifier, rasterized_vector_testing)
+
+    # Build forest of trees and calculate metrics
+    metrics = classifier.fit_and_calculate_metrics(0.25)
+
     if do_prediction:
-        # Calculate features for the other image
-        crop_and_merge(prediction_directory, tiff_ext_file_prediction)
+        # Calculate features for image to predict
+        crop_and_merge(prediction_directory, extension_prediction)
         calculate_features(prediction_directory, do_algebra, do_filters, do_ndvi)
         stack_features(prediction_directory, do_algebra, do_filters, do_ndvi, do_textures)
-        rasterized_training_roi = vector_training_roi[:-4] + ".tif" #Rasterize
-        print("Creating ROI: " + rasterized_training_roi)
-        rasterize_vector_file(vector_training_roi, rasterized_training_roi, tiff_ext_file_prediction)
-        classes_output = check_classes(rasterized_training_roi)
 
-        if use_training_roi:
-            output_classification = classifier.fit_and_calculate_metrics(0.0)
-        output_classification = predict(prediction_directory, classifier, output_file, rasterized_training_roi)
+        predict(prediction_directory, classifier, output_file)
 
     elapsed_time = time.time() - start_time
     print("Finished in {} seconds".format(str(elapsed_time)))
 
-    return [output_classification, classes_output_training, classes_output, start_time, "Finished in {} seconds".format(str(elapsed_time))]
+    return [metrics, classes_training, classes_output, start_time, "Finished in {} seconds".format(str(elapsed_time))]
 
 
 def calculate_threshold():

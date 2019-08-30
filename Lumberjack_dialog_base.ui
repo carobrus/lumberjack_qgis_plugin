@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>573</width>
-    <height>659</height>
+    <width>612</width>
+    <height>714</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>454</width>
-    <height>500</height>
+    <height>699</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -26,163 +26,8 @@
    <string>Lumberjack</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="4" column="0">
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
    <item row="25" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_6">
-     <item>
-      <widget class="QDialogButtonBox" name="button_box">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="8" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_imageDirectory">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Image Directory</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLineEdit" name="lineEdit_predictionDirectoy">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="clearButtonEnabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_predictionDirectory">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </item>
-   <item row="3" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_features">
-       <property name="text">
-        <string>Features</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_bandsAlgebra">
-       <property name="text">
-        <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_medianFilter">
-       <property name="text">
-        <string>Median and Gaussian Filter</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_ndvi">
-       <property name="text">
-        <string>NDVI</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="checkBox_textures">
-       <property name="text">
-        <string>Textures</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="5" column="0">
-    <widget class="QCheckBox" name="checkBox_prediction">
-     <property name="text">
-      <string>Predict for another image</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_trainingDirectory">
-       <property name="text">
-        <string>Training Directory</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QLineEdit" name="lineEdit_trainingDirectory">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_trainingDirectory">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </item>
-   <item row="16" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_5">
+    <layout class="QVBoxLayout" name="verticalLayout_output_file">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -235,32 +80,42 @@
      </item>
     </layout>
    </item>
-   <item row="11" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_7">
+   <item row="4" column="0">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="17" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_img_predict">
      <property name="spacing">
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label_inputLayerPrediction">
+      <widget class="QLabel" name="label_imageDirectory">
        <property name="enabled">
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Input Layer to Clip Raster by Extent</string>
+        <string>Image Directory</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLineEdit" name="lineEdit_inputLayerPrediction">
+        <widget class="QLineEdit" name="lineEdit_predictionDirectoy">
          <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="clearButtonEnabled">
           <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_inputLayerPrediction">
+        <widget class="QPushButton" name="pushButton_predictionDirectory">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -273,8 +128,159 @@
      </item>
     </layout>
    </item>
+   <item row="34" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QDialogButtonBox" name="button_box">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_features" stretch="0,0,0,0,0">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_features">
+       <property name="text">
+        <string>Features</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_bandsAlgebra">
+       <property name="text">
+        <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_medianFilter">
+       <property name="text">
+        <string>Median and Gaussian Filter</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_ndvi">
+       <property name="text">
+        <string>NDVI</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_textures">
+       <property name="text">
+        <string>Textures</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_training_directory">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_trainingDirectory">
+       <property name="text">
+        <string>Training Directory</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_trainingDirectory">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_trainingDirectory">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="14" column="0">
+    <widget class="QCheckBox" name="checkBox_prediction">
+     <property name="text">
+      <string>Predict for another image</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_extent_training">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_inputLayer">
+       <property name="text">
+        <string>Input file to clip raster by extent</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_inputLayer">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_inputLayer">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="28" column="0">
+    <widget class="QPlainTextEdit" name="plainTextEdit">
+     <property name="font">
+      <font>
+       <family>Courier New</family>
+      </font>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_4">
+    <layout class="QVBoxLayout" name="verticalLayout_vector_file">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -305,41 +311,35 @@
      </item>
     </layout>
    </item>
-   <item row="19" column="0">
-    <widget class="QPlainTextEdit" name="plainTextEdit">
-     <property name="font">
-      <font>
-       <family>Courier New</family>
-      </font>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
+   <item row="20" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_extent_predict">
      <property name="spacing">
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label_inputLayer">
+      <widget class="QLabel" name="label_inputLayerPrediction">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
-        <string>Input Layer to Clip Raster by Extent</string>
+        <string>Input file to clip raster by extent</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
-        <widget class="QLineEdit" name="lineEdit_inputLayer">
-         <property name="text">
-          <string/>
+        <widget class="QLineEdit" name="lineEdit_inputLayerPrediction">
+         <property name="enabled">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_inputLayer">
+        <widget class="QPushButton" name="pushButton_inputLayerPrediction">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>...</string>
          </property>
@@ -349,32 +349,87 @@
      </item>
     </layout>
    </item>
-   <item row="17" column="0">
+   <item row="13" column="0">
     <widget class="Line" name="line_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="18" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_9">
+   <item row="5" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_testing_vector">
      <property name="spacing">
       <number>0</number>
      </property>
      <item>
       <widget class="QCheckBox" name="checkBox_testing">
        <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Add tesiting files (otherwise use training image 75-25)</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="7" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_img_testing">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_testingDirectory">
+       <property name="enabled">
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Test with this Vector File (otherwise use training image 75-25)</string>
+        <string>Testing Directory</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_testingDirectory">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_testingDirectory">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="12" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item alignment="Qt::AlignBottom">
+      <widget class="QLabel" name="label_vectorFileTesting">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Vector File</string>
        </property>
       </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_6">
        <item>
-        <widget class="QLineEdit" name="lineEdit_vector_file_testing">
+        <widget class="QLineEdit" name="lineEdit_vectorFileTesting">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -382,6 +437,44 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_roi_testing">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="9" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_inputLayerTesting">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Input file to clip raster by extent</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_9">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_inputLayerTesting">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_inputLayerTesting">
          <property name="enabled">
           <bool>false</bool>
          </property>
