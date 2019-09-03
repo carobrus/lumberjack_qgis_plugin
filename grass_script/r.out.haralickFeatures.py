@@ -138,7 +138,7 @@ def main():
 					gscript.run_command('i.group', group='outFileBands', input=groupInput, quiet=True)
 
 				## Creating tiff image
-				gscript.run_command('r.out.gdal', flags='cm', input='outFileBands', output=output_file, format='GTiff', type='Float64', overwrite=True, verbose=True)
+				gscript.run_command('r.out.gdal', flags='cm', input='outFileBands', output=output_file, format='GTiff', type='Float32', overwrite=True, verbose=True)
 
 				print "Finished creating features"
 				print "Renaming raster bands"

@@ -10,6 +10,7 @@ from . import bands_algebra
 from . import filters
 from . import ndvi
 from . import threshold
+import math
 
 
 def crop_and_merge(training_directory, tiff_extension_filename):
@@ -86,13 +87,15 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
     if do_textures:
         rasterCount += 35
     if do_dem:
-        rasterCount += 5
+        rasterCount += 7
 
     for file in os.scandir(training_directory):
         if (file.is_dir()):
             print("Directory: {}".format(file.path))
             outband = None
             out_raster_ds = None
+            number_of_day_normalized = None
+            number_of_day_transform = None
             # For each file whose name it's like *band_____
             band_total = 0
             for tiff_file in os.listdir(file.path):
@@ -122,6 +125,12 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
                         outband = out_raster_ds.GetRasterBand(band_total)
                         outband.WriteArray(band.ReadAsArray())
 
+                if (tiff_file[-8:] == "_MTL.txt" and do_dem):
+                    date = get_date_from_metadata("{}/{}".format(file.path, tiff_file))
+                    number_of_day = transform_day(date)
+                    number_of_day_normalized = number_of_day / 366
+                    number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
+
             if do_dem:
                 dataset = gdal.Open(dem_file, gdal.GA_ReadOnly)
                 for band_number in range(dataset.RasterCount):
@@ -129,9 +138,35 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
                     band = dataset.GetRasterBand(band_number + 1)
                     outband = out_raster_ds.GetRasterBand(band_total)
                     outband.WriteArray(band.ReadAsArray())
+                # Add the number of day in the year for every pixel
+                band_total += 1
+                band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_normalized)
+                outband = out_raster_ds.GetRasterBand(band_total)
+                outband.WriteArray(band)
+                band_total += 1
+                band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_transform)
+                outband = out_raster_ds.GetRasterBand(band_total)
+                outband.WriteArray(band)
 
             outband.FlushCache()
             out_raster_ds = None
+
+
+def transform_day(date):
+    year, month, day = date.split("-")
+    year = int(year)
+    month = int(month)
+    day = int(day)
+    number_of_day = (datetime.date(year, month, day) - datetime.date(year,1,1)).days + 1
+    return number_of_day
+
+
+def get_date_from_metadata(file):
+    f = open(file, 'r')
+    for line in f.readlines():
+        if "DATE_ACQUIRED =" in line:
+            l = line.split("=")
+            return l[1]
 
 
 def rasterize_vector_file(vector_file_name, rasterized_vector_file, tiff_file):
