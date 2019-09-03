@@ -75,7 +75,7 @@ def calculate_features(training_directory, do_algebra, do_filters, do_ndvi):
                         filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"), "{}/{}{}".format(file.path, tiff_file[:-4], "_gaus.tif"))
 
 
-def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures):
+def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures, do_dem, dem_file):
     rasterCount = 7
     if do_algebra:
         rasterCount += 4
@@ -85,6 +85,8 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
         rasterCount += 1
     if do_textures:
         rasterCount += 35
+    if do_dem:
+        rasterCount += 5
 
     for file in os.scandir(training_directory):
         if (file.is_dir()):
@@ -119,6 +121,14 @@ def stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textu
                         band = dataset.GetRasterBand(band_number + 1)
                         outband = out_raster_ds.GetRasterBand(band_total)
                         outband.WriteArray(band.ReadAsArray())
+
+            if do_dem:
+                dataset = gdal.Open(dem_file, gdal.GA_ReadOnly)
+                for band_number in range(dataset.RasterCount):
+                    band_total += 1
+                    band = dataset.GetRasterBand(band_number + 1)
+                    outband = out_raster_ds.GetRasterBand(band_total)
+                    outband.WriteArray(band.ReadAsArray())
 
             outband.FlushCache()
             out_raster_ds = None
@@ -211,10 +221,12 @@ def predict(directory, classifier, prediction_result_img):
 
 
 def execute(training_directory, tiff_extension_file, vector_file_name,
-            do_algebra, do_filters, do_ndvi, do_textures, do_testing,
-            testing_directory, extension_testing, vector_testing_roi,
+            do_algebra, do_filters, do_ndvi, do_textures, do_dem,
+            dem_training,
+            do_testing, testing_directory, extension_testing,
+            vector_testing_roi, dem_testing,
             do_prediction, prediction_directory, extension_prediction,
-            output_file):
+            dem_prediction, output_file):
 
     start_time_str = str(datetime.datetime.now())
     print("============================= " + start_time_str + " =============================")
@@ -224,7 +236,7 @@ def execute(training_directory, tiff_extension_file, vector_file_name,
     # Files to be cropped according the tiff_extension_file (all layers to be cropped and merged)
     crop_and_merge(training_directory, tiff_extension_file)
     calculate_features(training_directory, do_algebra, do_filters, do_ndvi)
-    stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures)
+    stack_features(training_directory, do_algebra, do_filters, do_ndvi, do_textures, do_dem, dem_training)
 
     # Creates ROI for training
     rasterized_vector_file = vector_file_name[:-4] + ".tif" #Rasterize
@@ -241,7 +253,7 @@ def execute(training_directory, tiff_extension_file, vector_file_name,
         # Calculate features for testing files
         crop_and_merge(testing_directory, extension_testing)
         calculate_features(testing_directory, do_algebra, do_filters, do_ndvi)
-        stack_features(testing_directory, do_algebra, do_filters, do_ndvi, do_textures)
+        stack_features(testing_directory, do_algebra, do_filters, do_ndvi, do_textures, do_dem, dem_testing)
 
         # Creates ROI for testing
         rasterized_vector_testing = vector_testing_roi[:-4] + ".tif" #Rasterize
@@ -258,7 +270,7 @@ def execute(training_directory, tiff_extension_file, vector_file_name,
         # Calculate features for image to predict
         crop_and_merge(prediction_directory, extension_prediction)
         calculate_features(prediction_directory, do_algebra, do_filters, do_ndvi)
-        stack_features(prediction_directory, do_algebra, do_filters, do_ndvi, do_textures)
+        stack_features(prediction_directory, do_algebra, do_filters, do_ndvi, do_textures, do_dem, dem_prediction)
 
         predict(prediction_directory, classifier, output_file)
 

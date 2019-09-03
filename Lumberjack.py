@@ -225,6 +225,18 @@ class Lumberjack:
         filename = QFileDialog.getOpenFileName(self.dlg, "Select vector file","","*.shp")
         self.dlg.lineEdit_vectorFileTesting.setText(filename[0])
 
+    def select_dem(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select DEM","","*.tif; *.tiff")
+        self.dlg.lineEdit_dem_training.setText(filename[0])
+
+    def select_dem_testing(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select DEM","","*.tif; *.tiff")
+        self.dlg.lineEdit_dem_testing.setText(filename[0])
+
+    def select_dem_prediction(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select DEM","","*.tif; *.tiff")
+        self.dlg.lineEdit_dem_prediction.setText(filename[0])
+
     def toggle_predicting_image(self, state):
         if state > 0:
             self.dlg.label_imageDirectory.setEnabled(True)
@@ -237,6 +249,10 @@ class Lumberjack:
             self.dlg.lineEdit_outputFile.setEnabled(True)
             self.dlg.pushButton_outputFile.setEnabled(True)
             self.dlg.checkBox_addFile.setEnabled(True)
+            if self.dlg.checkBox_dem.isChecked():
+                self.dlg.label_dem_prediction.setEnabled(True)
+                self.dlg.lineEdit_dem_prediction.setEnabled(True)
+                self.dlg.pushButton_dem_prediction.setEnabled(True)
         else:
             self.dlg.label_imageDirectory.setEnabled(False)
             self.dlg.lineEdit_predictionDirectoy.setEnabled(False)
@@ -248,6 +264,10 @@ class Lumberjack:
             self.dlg.lineEdit_outputFile.setEnabled(False)
             self.dlg.pushButton_outputFile.setEnabled(False)
             self.dlg.checkBox_addFile.setEnabled(False)
+            if self.dlg.checkBox_dem.isChecked():
+                self.dlg.label_dem_prediction.setEnabled(False)
+                self.dlg.lineEdit_dem_prediction.setEnabled(False)
+                self.dlg.pushButton_dem_prediction.setEnabled(False)
 
     def toggle_testing(self, state):
         if state > 0:
@@ -260,6 +280,10 @@ class Lumberjack:
             self.dlg.label_vectorFileTesting.setEnabled(True)
             self.dlg.lineEdit_vectorFileTesting.setEnabled(True)
             self.dlg.pushButton_roi_testing.setEnabled(True)
+            if self.dlg.checkBox_dem.isChecked():
+                self.dlg.label_dem_testing.setEnabled(True)
+                self.dlg.lineEdit_dem_testing.setEnabled(True)
+                self.dlg.pushButton_dem_testing.setEnabled(True)
         else:
             self.dlg.label_testingDirectory.setEnabled(False)
             self.dlg.lineEdit_testingDirectory.setEnabled(False)
@@ -270,7 +294,34 @@ class Lumberjack:
             self.dlg.label_vectorFileTesting.setEnabled(False)
             self.dlg.lineEdit_vectorFileTesting.setEnabled(False)
             self.dlg.pushButton_roi_testing.setEnabled(False)
+            if self.dlg.checkBox_dem.isChecked():
+                self.dlg.label_dem_testing.setEnabled(False)
+                self.dlg.lineEdit_dem_testing.setEnabled(False)
+                self.dlg.pushButton_dem_testing.setEnabled(False)
 
+    def toggle_dem(self, state):
+        if state > 0:
+            self.dlg.lineEdit_dem_training.setEnabled(True)
+            self.dlg.pushButton_dem_training.setEnabled(True)
+            if self.dlg.checkBox_testing.isChecked():
+                self.dlg.label_dem_testing.setEnabled(True)
+                self.dlg.lineEdit_dem_testing.setEnabled(True)
+                self.dlg.pushButton_dem_testing.setEnabled(True)
+            if self.dlg.checkBox_prediction.isChecked():
+                self.dlg.label_dem_prediction.setEnabled(True)
+                self.dlg.lineEdit_dem_prediction.setEnabled(True)
+                self.dlg.pushButton_dem_prediction.setEnabled(True)
+        else:
+            self.dlg.lineEdit_dem_training.setEnabled(False)
+            self.dlg.pushButton_dem_training.setEnabled(False)
+            if self.dlg.checkBox_testing.isChecked():
+                self.dlg.label_dem_testing.setEnabled(False)
+                self.dlg.lineEdit_dem_testing.setEnabled(False)
+                self.dlg.pushButton_dem_testing.setEnabled(False)
+            if self.dlg.checkBox_prediction.isChecked():
+                self.dlg.label_dem_prediction.setEnabled(False)
+                self.dlg.lineEdit_dem_prediction.setEnabled(False)
+                self.dlg.pushButton_dem_prediction.setEnabled(False)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -312,6 +363,17 @@ class Lumberjack:
             self.dlg.lineEdit_vectorFileTesting.clear()
             self.dlg.pushButton_roi_testing.clicked.connect(self.select_vector_file_testing)
 
+            self.dlg.checkBox_dem.stateChanged.connect(self.toggle_dem)
+
+            self.dlg.lineEdit_dem_training.clear()
+            self.dlg.pushButton_dem_training.clicked.connect(self.select_dem)
+
+            self.dlg.lineEdit_dem_testing.clear()
+            self.dlg.pushButton_dem_testing.clicked.connect(self.select_dem_testing)
+
+            self.dlg.lineEdit_dem_prediction.clear()
+            self.dlg.pushButton_dem_prediction.clicked.connect(self.select_dem_prediction)
+
             # parameters
             # self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-01-02-03")
             # self.dlg.lineEdit_inputLayer.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-01-02-03/LC082250852018012801T1-SC20190815124236/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1-clipped.tif")
@@ -342,15 +404,20 @@ class Lumberjack:
                 do_filters = self.dlg.checkBox_medianFilter.isChecked(),
                 do_ndvi = self.dlg.checkBox_ndvi.isChecked(),
                 do_textures =  self.dlg.checkBox_textures.isChecked(),
+                do_dem = self.dlg.checkBox_dem.isChecked(),
+
+                dem_training = self.dlg.lineEdit_dem_training.text(),
 
                 do_testing = self.dlg.checkBox_testing.isChecked(),
                 testing_directory = self.dlg.lineEdit_testingDirectory.text(),
                 extension_testing = self.dlg.lineEdit_inputLayerTesting.text(),
                 vector_testing_roi = self.dlg.lineEdit_vectorFileTesting.text(),
+                dem_testing =  self.dlg.lineEdit_dem_testing.text(),
 
                 do_prediction = self.dlg.checkBox_prediction.isChecked(),
                 prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
                 extension_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
+                dem_prediction =  self.dlg.lineEdit_dem_prediction.text(),
                 output_file = self.dlg.lineEdit_outputFile.text()
             )
 
