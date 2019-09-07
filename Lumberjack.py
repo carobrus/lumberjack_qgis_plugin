@@ -26,6 +26,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog
 from qgis.utils import iface
 from qgis.core import Qgis
+from qgis.core import (QgsApplication, QgsTask, QgsMessageLog,)
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -33,7 +34,8 @@ from .resources import *
 from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
-from . import main
+from .main import Main
+from .heavy_processing_example import RandomIntegerSumTask
 
 import sys
 
@@ -76,6 +78,7 @@ class Lumberjack:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+        self.task = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -374,28 +377,14 @@ class Lumberjack:
             self.dlg.lineEdit_dem_prediction.clear()
             self.dlg.pushButton_dem_prediction.clicked.connect(self.select_dem_prediction)
 
-            # parameters
-            # self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-01-02-03")
-            # self.dlg.lineEdit_inputLayer.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-01-02-03/LC082250852018012801T1-SC20190815124236/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1-clipped.tif")
-            # self.dlg.lineEdit_vectorFile.setText("C:/Users/Carolina/Documents/Tesis/Shape/roiLasFlores3.shp")
-            #
-            # self.dlg.lineEdit_testingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-04-05-06")
-            # self.dlg.lineEdit_inputLayerTesting.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/LasFlores-01-02-03/LC082250852018012801T1-SC20190815124236/LC08_L1TP_225085_20180128_20180207_01_T1_sr_band1-clipped.tif")
-            # self.dlg.lineEdit_vectorFileTesting.setText("C:/Users/Carolina/Documents/Tesis/Shape/roiLasFlores3.shp")
+            self.dlg.finished.connect(self.result)
 
-            # self.dlg.lineEdit_predictionDirectoy.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Prediction")
-            # self.dlg.lineEdit_inputLayerPrediction.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/espa-bruscantinic@gmail.com-0101908152628/LC082280842019010401T1-SC20190815123348/LC08_L1TP_228084_20190104_20190130_01_T1_sr_band1-clipped.tif")
-            # self.dlg.lineEdit_outputFile.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Prediction-Results/prueba.tif")
+        self.dlg.open()
 
 
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
+    def result(self, result):
         if result:
-
-            output_classification, ct, co, start_time, end_time = main.execute(
+            self.task = Main(
                 training_directory = self.dlg.lineEdit_trainingDirectory.text(),
                 tiff_extension_file = self.dlg.lineEdit_inputLayer.text(),
                 vector_file_name = self.dlg.lineEdit_vectorFile.text(),
@@ -419,33 +408,36 @@ class Lumberjack:
                 extension_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
                 dem_prediction =  self.dlg.lineEdit_dem_prediction.text(),
                 output_file = self.dlg.lineEdit_outputFile.text()
-            )
+                )
+            # QgsApplication.taskManager().addTask(self.task)
+            self.task.execute()
 
-            self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
-            self.dlg.plainTextEdit.appendPlainText("Classes when training:")
-            for i in ct:
-                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-            if co is not None:
-                self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
-                for i in co:
-                    self.dlg.plainTextEdit.appendPlainText("- " + str(i))
 
-            if output_classification is not None:
-                for i in output_classification[:-1]:
-                    self.dlg.plainTextEdit.appendPlainText(str(i))
-                self.dlg.plainTextEdit.appendPlainText(end_time)
-                self.dlg.plainTextEdit.appendPlainText("")
+        # self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
+        # self.dlg.plainTextEdit.appendPlainText("Classes when training:")
+        # for i in ct:
+        #     self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        # if co is not None:
+        #     self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+        #     for i in co:
+        #         self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        #
+        # if output_classification is not None:
+        #     for i in output_classification[:-1]:
+        #         self.dlg.plainTextEdit.appendPlainText(str(i))
+        #     self.dlg.plainTextEdit.appendPlainText(end_time)
+        #     self.dlg.plainTextEdit.appendPlainText("")
+        #
+        #     self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
+        #     self.plotWindow.show()
 
-                self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
-                self.plotWindow.show()
+        # if self.dlg.checkBox_prediction.isChecked():
+        #     self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
+        #     if self.dlg.checkBox_addFile.isChecked():
+        #         self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
 
-            if self.dlg.checkBox_prediction.isChecked():
-                self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
-                if self.dlg.checkBox_addFile.isChecked():
-                    self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
-
-            # data_plotbox = main.calculate_threshold()
-            # print(str(data_plotbox.shape))
-            # print(str(data_plotbox[:,0:7].shape))
-            # self.plotboxWindow = PlotboxWindow(self.dlg, data=data_plotbox[:,0:7])
-            # self.plotboxWindow.show()
+        # data_plotbox = main.calculate_threshold()
+        # print(str(data_plotbox.shape))
+        # print(str(data_plotbox[:,0:7].shape))
+        # self.plotboxWindow = PlotboxWindow(self.dlg, data=data_plotbox[:,0:7])
+        # self.plotboxWindow.show()
