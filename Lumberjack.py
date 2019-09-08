@@ -35,7 +35,6 @@ from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
 from .main import Main
-from .heavy_processing_example import RandomIntegerSumTask
 
 import sys
 
@@ -328,7 +327,6 @@ class Lumberjack:
 
     def run(self):
         """Run method that performs all the real work"""
-
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
@@ -407,37 +405,41 @@ class Lumberjack:
                 prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
                 extension_prediction = self.dlg.lineEdit_inputLayerPrediction.text(),
                 dem_prediction =  self.dlg.lineEdit_dem_prediction.text(),
-                output_file = self.dlg.lineEdit_outputFile.text()
+                output_file = self.dlg.lineEdit_outputFile.text(),
+                lumberjack_instance = self
                 )
-            # QgsApplication.taskManager().addTask(self.task)
-            self.task.execute()
 
+            QgsApplication.taskManager().addTask(self.task)
 
-        # self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(start_time))
-        # self.dlg.plainTextEdit.appendPlainText("Classes when training:")
-        # for i in ct:
-        #     self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-        # if co is not None:
-        #     self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
-        #     for i in co:
-        #         self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-        #
-        # if output_classification is not None:
-        #     for i in output_classification[:-1]:
-        #         self.dlg.plainTextEdit.appendPlainText(str(i))
-        #     self.dlg.plainTextEdit.appendPlainText(end_time)
-        #     self.dlg.plainTextEdit.appendPlainText("")
-        #
-        #     self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
-        #     self.plotWindow.show()
-
-        # if self.dlg.checkBox_prediction.isChecked():
-        #     self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
-        #     if self.dlg.checkBox_addFile.isChecked():
-        #         self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
+        # self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
+        # self.plotWindow.show()
 
         # data_plotbox = main.calculate_threshold()
         # print(str(data_plotbox.shape))
         # print(str(data_plotbox[:,0:7].shape))
         # self.plotboxWindow = PlotboxWindow(self.dlg, data=data_plotbox[:,0:7])
         # self.plotboxWindow.show()
+
+    def notify_metrics(self, start_time, classes_training, classes_output, metrics, time):
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Classes when training:")
+        for i in classes_training:
+            self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        if classes_output is not None:
+            self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+            for i in classes_output:
+                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+
+        if metrics is not None:
+            for i in metrics[:-1]:
+                self.dlg.plainTextEdit.appendPlainText(str(i))
+            self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+            self.dlg.plainTextEdit.appendPlainText("")
+
+        self.dlg.open()
+
+    def notify_task(self):
+        if self.dlg.checkBox_prediction.isChecked():
+            self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
+            if self.dlg.checkBox_addFile.isChecked():
+                self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")

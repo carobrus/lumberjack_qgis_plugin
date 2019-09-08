@@ -1,3 +1,4 @@
+from qgis.core import (QgsApplication, QgsTask, QgsMessageLog, Qgis)
 import os
 import subprocess
 import time
@@ -12,13 +13,18 @@ from . import ndvi
 from . import threshold
 import math
 
+MESSAGE_CATEGORY = 'Lumberjack'
 
-class Main():
+
+class Main(QgsTask):
+# class Main():
 
     def crop_and_merge(self, training_directory, tiff_extension_filename):
         """
-        Crops all images in the directory according to a given file. Adds "crop" to the filename just before the extension.
-        It merges all the cropped images and creates a new file with the "merged" suffix.
+        Crops all images in the directory according to a given file.
+        Adds "crop" to the filename just before the extension.
+        It merges all the cropped images and creates a new file
+            with the "merged" suffix.
         """
         ext_ds = gdal.Open(tiff_extension_filename, gdal.GA_ReadOnly)
         # Get Extension
@@ -42,13 +48,14 @@ class Main():
                         band_number += 1
                         print("Cropping Tiff file: {}".format(tiff_file))
                         # Crop image to extension
-                        subprocess.call("gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}/{}\" \"{}/{}{}{}\"".format(minx, maxy, maxx, miny, file.path, tiff_file, file.path, tiff_file[:-5], str(band_number), "crop.tif"), stdout=open(os.devnull, 'wb'), shell=True)
+                        command_translate = "gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}/{}\" \"{}/{}{}{}\""
+                        subprocess.call(command_translate.format(minx, maxy, maxx, miny, file.path, tiff_file, file.path, tiff_file[:-5], str(band_number), "crop.tif"), stdout=open(os.devnull, 'wb'), shell=True)
                         ds = gdal.Open("{}/{}{}crop.tif".format(file.path, tiff_file[:-5], str(band_number)), gdal.GA_ReadOnly)
                         if (band_number == 1):
                             driver = gdal.GetDriverByName('GTiff')
                             file_name = "{}/{}merged.tif".format(file.path, tiff_file[:-9])
                             # if os.path.exists(file_name):
-                                # os.remove(file_name)
+                            #     os.remove(file_name)
                             outRaster = driver.Create(file_name, ext_ds.RasterXSize, ext_ds.RasterYSize, 7, gdal.GDT_Int16)
                             #print ("Creating file: " + file_name)
                             outRaster.SetGeoTransform(ext_ds.GetGeoTransform())
@@ -58,7 +65,6 @@ class Main():
                         outband.WriteArray(band_cropped)
                 print ("File created: " + file_name)
                 outband.FlushCache()
-
 
     def calculate_features(self, training_directory, do_algebra, do_filters, do_ndvi):
         for file in os.scandir(training_directory):
@@ -77,7 +83,6 @@ class Main():
                         if do_filters:
                             filters.generate_filter_file(abs_path_tiff_file, "{}/{}{}".format(file.path, tiff_file[:-4], "_filt.tif"), "{}/{}{}".format(file.path, tiff_file[:-4], "_gaus.tif"))
 
-
     def stack_features(self, training_directory, do_algebra, do_filters, do_ndvi, do_textures, do_dem, dem_file):
         rasterCount = 7
         if do_algebra:
@@ -90,6 +95,12 @@ class Main():
             rasterCount += 35
         if do_dem:
             rasterCount += 7
+        """ Yes. This is hardcoded. This method iterates through the training directory,
+        searching for the 7 bands that the HighLevel Landsat-8 images have,
+        and stack them with all the other features. To change this, all paths to files
+        can be stored in an array, and then with gdal.Open, the RasterCount for each file
+        can be known, and then itereate through the bands to generate the stacked file.
+        """
 
         for file in os.scandir(training_directory):
             if (file.is_dir()):
@@ -153,15 +164,13 @@ class Main():
                 outband.FlushCache()
                 out_raster_ds = None
 
-
     def transform_day(self, date):
         year, month, day = date.split("-")
         year = int(year)
         month = int(month)
         day = int(day)
-        number_of_day = (datetime.date(year, month, day) - datetime.date(year,1,1)).days + 1
+        number_of_day = (datetime.date(year, month, day) - datetime.date(year, 1, 1)).days + 1
         return number_of_day
-
 
     def get_date_from_metadata(self, file):
         f = open(file, 'r')
@@ -169,7 +178,6 @@ class Main():
             if "DATE_ACQUIRED =" in line:
                 l = line.split("=")
                 return l[1]
-
 
     def rasterize_vector_file(self, vector_file_name, rasterized_vector_file, tiff_file):
         # Rasterize
@@ -191,7 +199,8 @@ class Main():
         vector_dataset = ogr.Open(vector_file_name)
         layer = vector_dataset.GetLayerByIndex(0)
         # Rasterize the shapefile layer to our new dataset
-        status = gdal.RasterizeLayer(out_raster_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
+        status = gdal.RasterizeLayer(out_raster_ds, [1], layer, None, None,
+                                     [0], ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
 
         # Close dataset
         out_raster_ds = None
@@ -200,7 +209,6 @@ class Main():
             print("Error creating rasterized tiff")
         else:
             print("Rasterize tiff created")
-
 
     def add_samples(self, training_directory, classifier, rasterized_vector_file):
         for file in os.scandir(training_directory):
@@ -213,7 +221,6 @@ class Main():
                         file_name = "{}/{}".format(file.path, tiff_file)
                         classifier.add_samples(file_name, rasterized_vector_file)
 
-
     def add_test_samples(self, training_directory, classifier, rasterized_vector_file):
         for file in os.scandir(training_directory):
             if (file.is_dir()):
@@ -224,7 +231,6 @@ class Main():
                         print("File: {}".format(tiff_file))
                         file_name = "{}/{}".format(file.path, tiff_file)
                         classifier.add_test_samples(file_name, rasterized_vector_file)
-
 
     def check_classes(self, rasterized_vector_file):
         output = []
@@ -244,7 +250,6 @@ class Main():
 
         return output
 
-
     def predict(self, directory, classifier, prediction_result_img):
         for file in os.scandir(directory):
             if (file.is_dir()):
@@ -257,13 +262,17 @@ class Main():
                         classifier.predict_an_image(file_name, prediction_result_img)
 
 
+    def calculate_threshold(self):
+        return threshold.calculate_threshold()
+
+
     def __init__(self, training_directory, tiff_extension_file, vector_file_name,
-                do_algebra, do_filters, do_ndvi, do_textures, do_dem,
-                dem_training,
-                do_testing, testing_directory, extension_testing,
-                vector_testing_roi, dem_testing,
-                do_prediction, prediction_directory, extension_prediction,
-                dem_prediction, output_file):
+                 do_algebra, do_filters, do_ndvi, do_textures, do_dem,
+                 dem_training, do_testing, testing_directory, extension_testing,
+                 vector_testing_roi, dem_testing,
+                 do_prediction, prediction_directory, extension_prediction,
+                 dem_prediction, output_file, lumberjack_instance):
+        super().__init__("Lumberjack execution", QgsTask.CanCancel)
         self.training_directory = training_directory
         self.tiff_extension_file = tiff_extension_file
         self.vector_file_name = vector_file_name
@@ -284,64 +293,146 @@ class Main():
         self.dem_prediction = dem_prediction
         self.output_file = output_file
         self.exception = None
+        self.li = lumberjack_instance
 
+    def run(self):
+        """Here you implement your heavy lifting.
+        Should periodically test for isCanceled() to gracefully abort.
+        This method MUST return True or False.
+        Raising exceptions will crash QGIS, so we handle them
+        internally and raise them in self.finished
+        """
+        QgsMessageLog.logMessage('Started task "{}"'.format(self.description()), MESSAGE_CATEGORY, Qgis.Info)
+        self.setProgress(0)
 
-    def execute(self):
         start_time_str = str(datetime.datetime.now())
         print("============================= " + start_time_str + " =============================")
-        start_time = time.time()
+        self.start_time = time.time()
 
         # Prepares training
         # Files to be cropped according the tiff_extension_file (all layers to be cropped and merged)
         self.crop_and_merge(self.training_directory, self.tiff_extension_file)
-        self.calculate_features(self.training_directory, self.do_algebra, self.do_filters, self.do_ndvi)
-        self.stack_features(self.training_directory, self.do_algebra, self.do_filters, self.do_ndvi, self.do_textures, self.do_dem, self.dem_training)
+        self.setProgress(5)
+        self.calculate_features(self.training_directory,
+                                self.do_algebra, self.do_filters, self.do_ndvi)
+        self.setProgress(10)
+        self.stack_features(self.training_directory, self.do_algebra, self.do_filters,
+                            self.do_ndvi, self.do_textures, self.do_dem, self.dem_training)
+        self.setProgress(15)
 
         # Creates ROI for training
-        rasterized_vector_file = self.vector_file_name[:-4] + ".tif" #Rasterize
+        # Rasterize
+        rasterized_vector_file = self.vector_file_name[:-4] + ".tif"
         print("Creating ROI: " + rasterized_vector_file)
         self.rasterize_vector_file(self.vector_file_name, rasterized_vector_file, self.tiff_extension_file)
-        classes_training = self.check_classes(rasterized_vector_file)
+        self.classes_training = self.check_classes(rasterized_vector_file)
+        self.setProgress(20)
 
         # Create classifier and add samples to train
         classifier = Classifier()
         self.add_samples(self.training_directory, classifier, rasterized_vector_file)
+        self.setProgress(30)
 
-        classes_output = None
+        if self.isCanceled():
+            return False
+
+        self.classes_output = None
         if (self.do_testing):
             # Calculate features for testing files
             self.crop_and_merge(self.testing_directory, self.extension_testing)
+            self.setProgress(35)
             self.calculate_features(self.testing_directory, self.do_algebra, self.do_filters, self.do_ndvi)
-            self.stack_features(self.testing_directory, self.do_algebra, self.do_filters, self.do_ndvi, self.do_textures, self.do_dem, self.dem_testing)
+            self.setProgress(40)
+            self.stack_features(self.testing_directory, self.do_algebra, self.do_filters,
+                                self.do_ndvi, self.do_textures, self.do_dem, self.dem_testing)
+            self.setProgress(45)
 
             # Creates ROI for testing
-            rasterized_vector_testing = self.vector_testing_roi[:-4] + ".tif" #Rasterize
+            # Rasterize
+            rasterized_vector_testing = self.vector_testing_roi[:-4] + ".tif"
             print("Creating ROI: " + rasterized_vector_testing)
             self.rasterize_vector_file(self.vector_testing_roi, rasterized_vector_testing, self.extension_testing)
-            classes_output = check_classes(rasterized_vector_testing)
+            self.classes_output = check_classes(rasterized_vector_testing)
+            self.setProgress(50)
 
             self.add_test_samples(self.testing_directory, classifier, rasterized_vector_testing)
+            self.setProgress(60)
+
+            if self.isCanceled():
+                return False
 
         # Build forest of trees and calculate metrics
-        metrics = classifier.fit_and_calculate_metrics(0.25)
+        self.metrics = classifier.fit_and_calculate_metrics(0.25)
+        self.setProgress(75)
+
+        if self.isCanceled():
+            return False
 
         if self.do_prediction:
             # Calculate features for image to predict
             self.crop_and_merge(self.prediction_directory, self.extension_prediction)
+            self.setProgress(80)
             self.calculate_features(self.prediction_directory, self.do_algebra, self.do_filters, self.do_ndvi)
-            self.stack_features(self.prediction_directory, self.do_algebra, self.do_filters, self.do_ndvi, self.do_textures, self.do_dem, self.dem_prediction)
+            self.setProgress(85)
+            self.stack_features(self.prediction_directory, self.do_algebra, self.do_filters,
+                                self.do_ndvi, self.do_textures, self.do_dem, self.dem_prediction)
+            self.setProgress(90)
 
             self.predict(self.prediction_directory, classifier, self.output_file)
+            self.setProgress(100)
 
-        elapsed_time = time.time() - start_time
-        print("Finished in {} seconds".format(str(elapsed_time)))
+        self.elapsed_time = time.time() - self.start_time
+        print("Finished in {} seconds".format(str(self.elapsed_time)))
 
-        return [metrics, classes_training, classes_output, start_time, "Finished in {} seconds".format(str(elapsed_time))]
+        if self.isCanceled():
+            return False
 
+        # if arandominteger == 42:
+        #     # DO NOT raise Exception('bad value!')
+        #     # this would crash QGIS
+        #     self.exception = Exception('bad value!')
+        #     return False
+        return True
 
-    def calculate_threshold(self):
-        return threshold.calculate_threshold()
+    def finished(self, result):
+        """
+        This function is automatically called when the task has completed (successfully or not).
+        You implement finished() to do whatever follow-up stuff should happen after the task is complete.
+        finished is always called from the main thread, so it's safe
+        to do GUI operations and raise Python exceptions here.
+        result is the return value from self.run.
+        """
+        if result:
+            QgsMessageLog.logMessage(
+                'Task "{name}" completed in {time} seconds\n' \
+                'Training Directory: {td})'.format(
+                  name=self.description(),
+                  time=self.elapsed_time,
+                  td=self.training_directory),
+              MESSAGE_CATEGORY, Qgis.Success)
 
+            self.li.notify_metrics(self.start_time, self.classes_training, self.classes_output, self.metrics, self.elapsed_time)
+            self.li.notify_task()
 
-# if __name__== "__main__":
-#     execute()
+        else:
+            if self.exception is None:
+                QgsMessageLog.logMessage(
+                    'Task "{name}" not successful but without '\
+                    'exception (probably the task was manually '\
+                    'canceled by the user)'.format(
+                        name=self.description()),
+                    MESSAGE_CATEGORY, Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(
+                    'Task "{name}" Exception: {exception}'.format(
+                        name=self.description(),
+                        exception=self.exception),
+                    MESSAGE_CATEGORY, Qgis.Critical)
+                raise self.exception
+
+    def cancel(self):
+        QgsMessageLog.logMessage(
+            'Task "{name}" was canceled'.format(
+                name=self.description()),
+            MESSAGE_CATEGORY, Qgis.Info)
+        super().cancel()
