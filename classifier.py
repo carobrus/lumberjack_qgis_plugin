@@ -20,8 +20,7 @@ class Classifier:
     __outfile_name = None
     __rf = None
 
-
-    def add_samples(self, input_tiff_file, rasterized_file):
+    def add_samples(self, input_tiff_file, rasterized_file, X_data, y_labels):
         dataset = gdal.Open(input_tiff_file, gdal.GA_ReadOnly)
         new_features_array = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount), dtype=np.float32)
         print("Shape array features: {}".format(new_features_array.shape))
@@ -34,37 +33,23 @@ class Classifier:
         roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
         X = new_features_array[roi > 0, :]
         y = roi[roi > 0]
-        if (len(self.__y_train) == 0):
-            self.__X_train = X
-            self.__y_train = y
+        if (len(y_labels) == 0):
+            X_data = X
+            y_labels = y
         else:
-            self.__X_train = np.append(self.__X_train, X, axis=0)
-            self.__y_train = np.append(self.__y_train, y)
-        print("X size: {}".format(self.__X_train.shape))
-        print("y size: {}".format(self.__y_train.shape))
+            X_data = np.append(X_data, X, axis=0)
+            y_labels = np.append(y_labels, y)
+        print("X size: {}".format(X_data.shape))
+        print("y size: {}".format(y_labels.shape))
+        return X_data, y_labels
 
 
     def add_test_samples(self, input_tiff_file, rasterized_file):
-        dataset = gdal.Open(input_tiff_file, gdal.GA_ReadOnly)
-        new_features_array = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount), dtype=np.float32)
-        print("Shape array features: {}".format(new_features_array.shape))
-        for band_number in range(dataset.RasterCount):
-            band = dataset.GetRasterBand(band_number + 1)
-            # Read in the band's data into the third dimension of our array
-            new_features_array[:, :, band_number] = band.ReadAsArray()
+        self.__X_test, self.__y_test = self.add_samples(input_tiff_file, rasterized_file, self.__X_test, self.__y_test)
 
-        roi_ds = gdal.Open(rasterized_file, gdal.GA_ReadOnly)
-        roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
-        X = new_features_array[roi > 0, :]
-        y = roi[roi > 0]
-        if (len(self.__y_test) == 0):
-            self.__X_test = X
-            self.__y_test = y
-        else:
-            self.__X_test = np.append(self.__X_test, X, axis=0)
-            self.__y_test = np.append(self.__y_test, y)
-        print("X size: {}".format(self.__X_test.shape))
-        print("y size: {}".format(self.__y_test.shape))
+
+    def add_training_samples(self, input_tiff_file, rasterized_file):
+        self.__X_train, self.__y_train = self.add_samples(input_tiff_file, rasterized_file, self.__X_train, self.__y_train)
 
 
     def fit_and_calculate_metrics(self, test_size):

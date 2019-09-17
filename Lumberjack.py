@@ -26,7 +26,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog
 from qgis.utils import iface
 from qgis.core import Qgis
-from qgis.core import (QgsApplication, QgsTask, QgsMessageLog,)
+from qgis.core import (QgsApplication, QgsTask, QgsMessageLog, QgsProject)
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -411,8 +411,6 @@ class Lumberjack:
 
             QgsApplication.taskManager().addTask(self.task)
 
-        # self.plotWindow = PlotWindow(self.dlg, feature_importances=output_classification[-1])
-        # self.plotWindow.show()
 
         # data_plotbox = main.calculate_threshold()
         # print(str(data_plotbox.shape))
@@ -438,8 +436,17 @@ class Lumberjack:
 
         self.dlg.open()
 
-    def notify_task(self):
+        self.plotWindow = PlotWindow(self.dlg, feature_importances=metrics[-1])
+        self.plotWindow.show()
+
+    def notify_task(self, start_time):
         if self.dlg.checkBox_prediction.isChecked():
             self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
             if self.dlg.checkBox_addFile.isChecked():
-                self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), "result")
+                layer_name = "result-{time}".format(time=start_time)
+                self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), layer_name)
+                layers = QgsProject.instance().mapLayersByName(layer_name)
+                abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
+                print (abs_style_path)
+                layers[0].loadNamedStyle(abs_style_path)
+                self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())
