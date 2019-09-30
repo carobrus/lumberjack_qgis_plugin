@@ -195,10 +195,6 @@ class Lumberjack:
         filename = QFileDialog.getExistingDirectory(self.dlg, "Select training directory","")
         self.dlg.lineEdit_trainingDirectory.setText(filename)
 
-    def select_output_file(self):
-        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","","*.tif; *.tiff")
-        self.dlg.lineEdit_outputFile.setText(filename[0])
-
     def select_prediction_directory(self):
         filename = QFileDialog.getExistingDirectory(self.dlg, "Select prediction directory","")
         self.dlg.lineEdit_predictionDirectoy.setText(filename)
@@ -212,17 +208,11 @@ class Lumberjack:
             self.dlg.label_imageDirectory.setEnabled(True)
             self.dlg.lineEdit_predictionDirectoy.setEnabled(True)
             self.dlg.pushButton_predictionDirectory.setEnabled(True)
-            self.dlg.label_outputFile.setEnabled(True)
-            self.dlg.lineEdit_outputFile.setEnabled(True)
-            self.dlg.pushButton_outputFile.setEnabled(True)
             self.dlg.checkBox_addFile.setEnabled(True)
         else:
             self.dlg.label_imageDirectory.setEnabled(False)
             self.dlg.lineEdit_predictionDirectoy.setEnabled(False)
             self.dlg.pushButton_predictionDirectory.setEnabled(False)
-            self.dlg.label_outputFile.setEnabled(False)
-            self.dlg.lineEdit_outputFile.setEnabled(False)
-            self.dlg.pushButton_outputFile.setEnabled(False)
             self.dlg.checkBox_addFile.setEnabled(False)
 
     def toggle_testing(self, state):
@@ -252,9 +242,6 @@ class Lumberjack:
             self.dlg.lineEdit_predictionDirectoy.clear()
             self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
 
-            self.dlg.lineEdit_outputFile.clear()
-            self.dlg.pushButton_outputFile.clicked.connect(self.select_output_file)
-
             self.dlg.checkBox_testing.stateChanged.connect(self.toggle_testing)
 
             self.dlg.lineEdit_testingDirectory.clear()
@@ -281,7 +268,6 @@ class Lumberjack:
 
                 do_prediction = self.dlg.checkBox_prediction.isChecked(),
                 prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
-                output_file = self.dlg.lineEdit_outputFile.text(),
                 lumberjack_instance = self
                 )
 
@@ -317,13 +303,14 @@ class Lumberjack:
         self.plotWindow = PlotWindow(self.dlg, feature_importances=metrics[-1])
         self.plotWindow.show()
 
-    def notify_task(self, start_time):
+    def notify_task(self, start_time, output_files):
         if self.dlg.checkBox_prediction.isChecked():
-            self.iface.messageBar().pushMessage("Success", "Output file written at " + self.dlg.lineEdit_outputFile.text(), level=Qgis.Success, duration=3)
+            self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
             if self.dlg.checkBox_addFile.isChecked():
-                layer_name = "result-{time}".format(time=start_time)
-                self.iface.addRasterLayer(self.dlg.lineEdit_outputFile.text(), layer_name)
-                layers = QgsProject.instance().mapLayersByName(layer_name)
-                abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
-                layers[0].loadNamedStyle(abs_style_path)
-                self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())
+                for file_path in output_files:
+                    file_name = file_path.split("/")[-1]
+                    self.iface.addRasterLayer(file_path, file_name)
+                    layers = QgsProject.instance().mapLayersByName(file_name)
+                    abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
+                    layers[0].loadNamedStyle(abs_style_path)
+                    self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())

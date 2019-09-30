@@ -30,6 +30,7 @@ MERGED_SUFFIX = "merged.tif"
 STACK_SUFFIX = "stack.tif"
 TEXTURES_SUFFIX = "text.tif"
 SHAPEFILE_SUFFIX = "roi.shp"
+PREDICTION_SUFFIX = "predic"
 BAND_TOTAL = 7
 
 
@@ -114,16 +115,16 @@ class Main(QgsTask):
                 # print ("Creating file: " + merged_file_name)
 
 
-    def calculate_features(self, places, do_algebra, do_filters, do_ndvi):
+    def calculate_features(self, places):
         for place in places:
             for image in place.images:
                 merged_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
                 print("Generating features to file: {}".format(merged_file_name))
-                if do_algebra:
+                if self.do_algebra:
                     bands_algebra.generate_algebra_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], ALGEBRA_SUFFIX))
-                if do_ndvi:
+                if self.do_ndvi:
                     ndvi.generate_ndvi_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], NDVI_SUFFIX))
-                if do_filters:
+                if self.do_filters:
                     filters.generate_filter_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], FILTER_SUFFIX), "{}_{}".format(merged_file_name[:-4], GAUSS_SUFFIX))
 
     def stack(self, file_to_stack, output_dataset, band_num):
@@ -135,17 +136,17 @@ class Main(QgsTask):
             outband.WriteArray(band.ReadAsArray())
         return band_num
 
-    def stack_features(self, places, do_algebra, do_filters, do_ndvi, do_textures, do_dem):
+    def stack_features(self, places):
         features_total = BAND_TOTAL
-        if do_algebra:
+        if self.do_algebra:
             features_total += 4
-        if do_filters:
+        if self.do_filters:
             features_total += 14
-        if do_ndvi:
+        if self.do_ndvi:
             features_total += 1
-        if do_textures:
+        if self.do_textures:
             features_total += 35
-        if do_dem:
+        if self.do_dem:
             features_total += 7
 
         for place in places:
@@ -174,25 +175,25 @@ class Main(QgsTask):
                     outband = out_raster_ds.GetRasterBand(band_num)
                     outband.WriteArray(band.ReadAsArray())
 
-                if do_algebra:
+                if self.do_algebra:
                     algebra_file_name = "{}_{}".format(merged_file_name[:-4], ALGEBRA_SUFFIX)
                     band_num = self.stack(algebra_file_name, out_raster_ds, band_num)
 
-                if do_filters:
+                if self.do_filters:
                     filter_file_name = "{}_{}".format(merged_file_name[:-4], FILTER_SUFFIX)
                     gauss_file_name = "{}_{}".format(merged_file_name[:-4], GAUSS_SUFFIX)
                     band_num = self.stack(filter_file_name, out_raster_ds, band_num)
                     band_num = self.stack(gauss_file_name, out_raster_ds, band_num)
 
-                if do_ndvi:
+                if self.do_ndvi:
                     ndvi_file_name = "{}_{}".format(merged_file_name[:-4], NDVI_SUFFIX)
                     band_num = self.stack(ndvi_file_name, out_raster_ds, band_num)
 
-                if do_textures:
+                if self.do_textures:
                     textures_file_name = "{}/{}_{}".format(image.path, image.base_name, TEXTURES_SUFFIX)
                     band_num = self.stack(textures_file_name, out_raster_ds, band_num)
 
-                if do_dem:
+                if self.do_dem:
                     band_num = self.stack(place.dem_textures_file_path, out_raster_ds, band_num)
                     metadata_file_name = "{}/{}_{}".format(image.path, image.base_name, IMAGE_METADATA_SUFFIX)
                     date = self.get_date_from_metadata(metadata_file_name)
@@ -291,11 +292,15 @@ class Main(QgsTask):
 
         return output
 
-    def predict(self, places, classifier, prediction_result_img):
+    def predict(self, places, classifier, time_stamp):
+        output_files = []
         for place in places:
             for image in place.images:
                 stack_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, STACK_SUFFIX)
-                classifier.predict_an_image(stack_file_name, prediction_result_img)
+                output_file = "{}/{}_sr_{}_{}.tif".format(image.path, image.base_name, PREDICTION_SUFFIX, time_stamp.replace(" ", "_").replace(":","-"))
+                output_files.append(output_file)
+                classifier.predict_an_image(stack_file_name, output_file)
+        return output_files
 
 
     # def calculate_threshold(self):
@@ -305,14 +310,13 @@ class Main(QgsTask):
         # Files to be cropped according the extension_file (all layers to be cropped and merged)
         self.crop_images(places)
         self.merge_images(places)
-        self.calculate_features(places, self.do_algebra, self.do_filters, self.do_ndvi)
-        self.stack_features(places, self.do_algebra, self.do_filters,
-                            self.do_ndvi, self.do_textures, self.do_dem)
+        self.calculate_features(places)
+        self.stack_features(places)
 
 
     def __init__(self, training_directory, do_algebra, do_filters, do_ndvi,
                  do_textures, do_dem, do_testing, testing_directory,
-                 do_prediction, prediction_directory, output_file,
+                 do_prediction, prediction_directory,
                  lumberjack_instance):
         super().__init__("Lumberjack execution", QgsTask.CanCancel)
         self.training_directory = training_directory
@@ -325,9 +329,9 @@ class Main(QgsTask):
         self.testing_directory = testing_directory
         self.do_prediction = do_prediction
         self.prediction_directory = prediction_directory
-        self.output_file = output_file
         self.exception = None
         self.li = lumberjack_instance
+        self.output_files = []
 
     def run(self):
         """Here you implement your heavy lifting.
@@ -382,7 +386,7 @@ class Main(QgsTask):
             if self.do_prediction:
                 places_prediction = self.obtain_places(self.prediction_directory)
                 self.pre_process_images(places_prediction)
-                self.predict(places_prediction, classifier, self.output_file)
+                self.output_files = self.predict(places_prediction, classifier, self.start_time_str[:19])
 
             self.setProgress(100)
 
@@ -416,7 +420,7 @@ class Main(QgsTask):
               MESSAGE_CATEGORY, Qgis.Success)
 
             self.li.notify_metrics(self.start_time_str, self.classes_training, self.classes_output, self.metrics, self.elapsed_time)
-            self.li.notify_task(self.start_time_str)
+            self.li.notify_task(self.start_time_str, self.output_files)
 
         else:
             if self.exception is None:
