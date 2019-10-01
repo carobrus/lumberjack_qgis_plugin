@@ -44,7 +44,7 @@ class Classifier:
         return X_data, y_labels
 
 
-    def add_test_samples(self, input_tiff_file, rasterized_file):
+    def add_testing_samples(self, input_tiff_file, rasterized_file):
         self.__X_test, self.__y_test = self.add_samples(input_tiff_file, rasterized_file, self.__X_test, self.__y_test)
 
 

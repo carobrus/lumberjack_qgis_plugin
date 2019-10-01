@@ -36,6 +36,7 @@ BAND_TOTAL = 7
 
 class Main(QgsTask):
 
+
     def obtain_places(self, root_directory):
         places = []
         for place_directory in os.scandir(root_directory):
@@ -59,73 +60,63 @@ class Main(QgsTask):
                         elif (file_path[-(len(SHAPEFILE_SUFFIX)):] == SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
                 places.append(place)
-
         return places
 
 
-    def crop_images(self, places):
-        """
-        Crops all images in the directory according to the extension file.
-        Adds "crop" to the filename. It merges all the cropped images and
-            creates a new file with the "merged" suffix.
-        """
-        for place in places:
-            # Get Extension
-            extension_dataset = gdal.Open(place.extension_file_path, gdal.GA_ReadOnly)
-            geoTransform = extension_dataset.GetGeoTransform()
-            minx = geoTransform[0]
-            maxy = geoTransform[3]
-            maxx = minx + geoTransform[1] * extension_dataset.RasterXSize
-            miny = maxy + geoTransform[5] * extension_dataset.RasterYSize
+    def calculate_extension(self, extension_file_path):
+        extension_dataset = gdal.Open(extension_file_path, gdal.GA_ReadOnly)
+        geoTransform = extension_dataset.GetGeoTransform()
+        minx = geoTransform[0]
+        maxy = geoTransform[3]
+        maxx = minx + geoTransform[1] * extension_dataset.RasterXSize
+        miny = maxy + geoTransform[5] * extension_dataset.RasterYSize
+        return minx, maxy, maxx, miny
 
-            # For each image in a place
-            for image in place.images:
-                outRaster = None
-                outband = None
-                print("Image dir: {}".format(image.path))
-                for i in range(1, BAND_TOTAL+1):
-                    file_name_band = "{}/{}_sr_band{}.tif".format(image.path, image.base_name, i)
-                    file_name_crop = "{}/{}_sr_band{}_{}.tif".format(image.path, image.base_name, i, CROP_SUFFIX)
-                    # Crop image to extension
-                    print("Cropping tiff file: {}_sr_band{}.tif".format(image.base_name, i))
-                    command_translate = "gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}\" \"{}\""
-                    subprocess.call(command_translate.format(minx, maxy, maxx, miny, file_name_band, file_name_crop), stdout=open(os.devnull, 'wb'), shell=True)
+
+    def crop_images(self, file_name_band, file_name_crop,
+                    minx, maxy, maxx, miny):
+        # Crops all images in the directory according to the extension.
+        outRaster = None
+        outband = None
+        for i in range(1, BAND_TOTAL+1):
+            # Crop image to extension
+            command_translate = "gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}\" \"{}\""
+            subprocess.call(command_translate.format(
+                minx, maxy, maxx, miny, file_name_band.format(i),
+                file_name_crop.format(i)), stdout=open(os.devnull, 'wb'),
+                shell=True)
         # TODO: Remove cropped files after merged
 
 
-    def merge_images(self, places):
-        for place in places:
-            # For each image in a place
-            for image in place.images:
-                merged_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
-                # if os.path.exists(merged_file_name):
-                #     os.remove(merged_file_name)
-
-                for i in range(1, BAND_TOTAL+1):
-                    file = "{}/{}_sr_band{}_{}.tif".format(image.path, image.base_name, i, CROP_SUFFIX)
-                    dataset = gdal.Open(file, gdal.GA_ReadOnly)
-                    if i == 1:
-                        driver = gdal.GetDriverByName('GTiff')
-                        out_raster = driver.Create(merged_file_name, dataset.RasterXSize, dataset.RasterYSize, BAND_TOTAL, gdal.GDT_Int16)
-                        out_raster.SetGeoTransform(dataset.GetGeoTransform())
-                        out_raster.SetProjection(dataset.GetProjection())
-                    band_cropped = dataset.GetRasterBand(1).ReadAsArray()
-                    outband = out_raster.GetRasterBand(i)
-                    outband.WriteArray(band_cropped)
-                # print ("Creating file: " + merged_file_name)
+    def merge_images(self, file_name_crop, file_name_merged):
+        for i in range(1, BAND_TOTAL+1):
+            file_name_crop_n = file_name_crop.format(i)
+            print("File Name Crop: ", file_name_crop_n)
+            dataset = gdal.Open(file_name_crop_n, gdal.GA_ReadOnly)
+            if i == 1:
+                driver = gdal.GetDriverByName('GTiff')
+                output_dataset = driver.Create(
+                    file_name_merged, dataset.RasterXSize, dataset.RasterYSize,
+                    BAND_TOTAL, gdal.GDT_Int16)
+                output_dataset.SetGeoTransform(dataset.GetGeoTransform())
+                output_dataset.SetProjection(dataset.GetProjection())
+            band_cropped = dataset.GetRasterBand(1).ReadAsArray()
+            outband = output_dataset.GetRasterBand(i)
+            outband.WriteArray(band_cropped)
 
 
-    def calculate_features(self, places):
-        for place in places:
-            for image in place.images:
-                merged_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
-                print("Generating features to file: {}".format(merged_file_name))
-                if self.do_algebra:
-                    bands_algebra.generate_algebra_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], ALGEBRA_SUFFIX))
-                if self.do_ndvi:
-                    ndvi.generate_ndvi_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], NDVI_SUFFIX))
-                if self.do_filters:
-                    filters.generate_filter_file(merged_file_name, "{}_{}".format(merged_file_name[:-4], FILTER_SUFFIX), "{}_{}".format(merged_file_name[:-4], GAUSS_SUFFIX))
+    def calculate_features(self, file_name_merged, file_name_algebra,
+                           file_name_ndvi, file_name_filt, file_name_gauss):
+        print("Generating features to file: {}".format(file_name_merged))
+        if self.do_algebra:
+            bands_algebra.generate_algebra_file(
+                file_name_merged, file_name_algebra)
+        if self.do_ndvi:
+            ndvi.generate_ndvi_file(file_name_merged, file_name_ndvi)
+        if self.do_filters:
+            filters.generate_filter_file(
+                file_name_merged, file_name_filt, file_name_gauss)
+
 
     def stack(self, file_to_stack, output_dataset, band_num):
         dataset = gdal.Open(file_to_stack, gdal.GA_ReadOnly)
@@ -136,89 +127,71 @@ class Main(QgsTask):
             outband.WriteArray(band.ReadAsArray())
         return band_num
 
-    def stack_features(self, places):
-        features_total = BAND_TOTAL
+
+    def stack_features(self, dem_textures_file_path, file_name_merged,
+                       file_name_stack, file_name_algebra, file_name_filt,
+                       file_name_gauss, file_name_ndvi, file_name_text,
+                       file_name_metadata):
+        # Create the image that's going to stack all the features
+        print("Creating file: {}".format(file_name_stack))
+
+        outband = None
+        out_raster_ds = None
+        dataset = gdal.Open(file_name_merged, gdal.GA_ReadOnly)
+        memory_driver = gdal.GetDriverByName('GTiff')
+        if os.path.exists(file_name_stack):
+            os.remove(file_name_stack)
+        out_raster_ds = memory_driver.Create(
+            file_name_stack, dataset.RasterXSize, dataset.RasterYSize,
+            self.features_total, gdal.GDT_Float32)
+        out_raster_ds.SetProjection(dataset.GetProjectionRef())
+        out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
+
+        band_num = 0
+        # Add merged file bands
+        for band_number in range(dataset.RasterCount):
+            band_num += 1
+            band = dataset.GetRasterBand(band_number + 1)
+            outband = out_raster_ds.GetRasterBand(band_num)
+            outband.WriteArray(band.ReadAsArray())
+
         if self.do_algebra:
-            features_total += 4
+            band_num = self.stack(file_name_algebra, out_raster_ds, band_num)
         if self.do_filters:
-            features_total += 14
+            band_num = self.stack(file_name_filt, out_raster_ds, band_num)
+            band_num = self.stack(file_name_gauss, out_raster_ds, band_num)
         if self.do_ndvi:
-            features_total += 1
+            band_num = self.stack(file_name_ndvi, out_raster_ds, band_num)
         if self.do_textures:
-            features_total += 35
+            band_num = self.stack(file_name_text, out_raster_ds, band_num)
         if self.do_dem:
-            features_total += 7
+            band_num = self.stack(dem_textures_file_path, out_raster_ds, band_num)
+            date = self.get_date_from_metadata(file_name_metadata)
+            number_of_day = self.transform_day(date)
+            number_of_day_normalized = number_of_day / 366
+            number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
+            band_num += 1
+            band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_normalized)
+            outband = out_raster_ds.GetRasterBand(band_num)
+            outband.WriteArray(band)
+            band_num += 1
+            band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_transform)
+            outband = out_raster_ds.GetRasterBand(band_num)
+            outband.WriteArray(band)
 
-        for place in places:
-            for image in place.images:
-                merged_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+        outband.FlushCache()
+        out_raster_ds = None
 
-                # Create the image that's going to stack all the features
-                stack_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, STACK_SUFFIX)
-                print("Creating file: {}".format(stack_file_name))
-
-                outband = None
-                out_raster_ds = None
-                dataset = gdal.Open(merged_file_name, gdal.GA_ReadOnly)
-                memory_driver = gdal.GetDriverByName('GTiff')
-                if os.path.exists(stack_file_name):
-                    os.remove(stack_file_name)
-                out_raster_ds = memory_driver.Create(stack_file_name, dataset.RasterXSize, dataset.RasterYSize, features_total, gdal.GDT_Float32)
-                out_raster_ds.SetProjection(dataset.GetProjectionRef())
-                out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
-
-                band_num = 0
-                # Add merged file bands
-                for band_number in range(dataset.RasterCount):
-                    band_num += 1
-                    band = dataset.GetRasterBand(band_number + 1)
-                    outband = out_raster_ds.GetRasterBand(band_num)
-                    outband.WriteArray(band.ReadAsArray())
-
-                if self.do_algebra:
-                    algebra_file_name = "{}_{}".format(merged_file_name[:-4], ALGEBRA_SUFFIX)
-                    band_num = self.stack(algebra_file_name, out_raster_ds, band_num)
-
-                if self.do_filters:
-                    filter_file_name = "{}_{}".format(merged_file_name[:-4], FILTER_SUFFIX)
-                    gauss_file_name = "{}_{}".format(merged_file_name[:-4], GAUSS_SUFFIX)
-                    band_num = self.stack(filter_file_name, out_raster_ds, band_num)
-                    band_num = self.stack(gauss_file_name, out_raster_ds, band_num)
-
-                if self.do_ndvi:
-                    ndvi_file_name = "{}_{}".format(merged_file_name[:-4], NDVI_SUFFIX)
-                    band_num = self.stack(ndvi_file_name, out_raster_ds, band_num)
-
-                if self.do_textures:
-                    textures_file_name = "{}/{}_{}".format(image.path, image.base_name, TEXTURES_SUFFIX)
-                    band_num = self.stack(textures_file_name, out_raster_ds, band_num)
-
-                if self.do_dem:
-                    band_num = self.stack(place.dem_textures_file_path, out_raster_ds, band_num)
-                    metadata_file_name = "{}/{}_{}".format(image.path, image.base_name, IMAGE_METADATA_SUFFIX)
-                    date = self.get_date_from_metadata(metadata_file_name)
-                    number_of_day = self.transform_day(date)
-                    number_of_day_normalized = number_of_day / 366
-                    number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
-                    band_num += 1
-                    band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_normalized)
-                    outband = out_raster_ds.GetRasterBand(band_num)
-                    outband.WriteArray(band)
-                    band_num += 1
-                    band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_transform)
-                    outband = out_raster_ds.GetRasterBand(band_num)
-                    outband.WriteArray(band)
-
-                outband.FlushCache()
-                out_raster_ds = None
 
     def transform_day(self, date):
         year, month, day = date.split("-")
         year = int(year)
         month = int(month)
         day = int(day)
-        number_of_day = (datetime.date(year, month, day) - datetime.date(year, 1, 1)).days + 1
+        number_of_day = (datetime.date(year, month, day) -
+                         datetime.date(year, 1, 1)).days + 1
         return number_of_day
+
 
     def get_date_from_metadata(self, file):
         f = open(file, 'r')
@@ -227,19 +200,104 @@ class Main(QgsTask):
                 l = line.split("=")
                 return l[1]
 
-    def rasterize_files(self, places):
+
+    def predict(self, places, classifier, time_stamp):
+        output_files = []
+        for place in places:
+            for image in place.images:
+                stack_file_name = "{}/{}_sr_{}".format(
+                    image.path, image.base_name, STACK_SUFFIX)
+                output_file = "{}/{}_sr_{}_{}.tif".format(
+                    image.path, image.base_name, PREDICTION_SUFFIX,
+                    time_stamp.replace(" ", "_").replace(":","-"))
+                output_files.append(output_file)
+                classifier.predict_an_image(stack_file_name, output_file)
+        return output_files
+
+
+    # def calculate_threshold(self):
+    #     return threshold.calculate_threshold()
+
+
+    def check_classes(self, places):
+        output = []
+        for place in places:
+            rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
+            roi_ds = gdal.Open(rasterized_vector_file, gdal.GA_ReadOnly)
+            roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
+
+            classes = np.unique(roi)
+            # Iterate over all class labels in the ROI image
+            for c in classes:
+                print('Class {c} contains {n} pixels'.format(
+                    c=c, n=(roi == c).sum()))
+                output.append('Class {c} contains {n} pixels'.format(
+                    c=c, n=(roi == c).sum()))
+
+            # Find how many non-zero entries there are
+            n_samples = (roi > 0).sum()
+            print('There are {n} samples'.format(n=n_samples))
+            output.append('There are {n} samples'.format(n=n_samples))
+        return output
+
+
+    def pre_process_images(self, places):
+        for place in places:
+            minx, maxy, maxx, miny = self.calculate_extension(
+                place.extension_file_path)
+            for image in place.images:
+                # image represent each landsat image (a folder with the bands)
+                file_name_band = "{}/{}_sr_band{}.tif".format(
+                    image.path, image.base_name, "{}")
+                file_name_crop = "{}/{}_sr_band{}_{}.tif".format(
+                    image.path, image.base_name, "{}", CROP_SUFFIX)
+                file_name_merged = "{}/{}_sr_{}".format(
+                    image.path, image.base_name, MERGED_SUFFIX)
+                file_name_algebra = "{}_{}".format(
+                    file_name_merged[:-4], ALGEBRA_SUFFIX)
+                file_name_ndvi = "{}_{}".format(
+                    file_name_merged[:-4], NDVI_SUFFIX)
+                file_name_filt = "{}_{}".format(
+                    file_name_merged[:-4], FILTER_SUFFIX)
+                file_name_gauss = "{}_{}".format(
+                    file_name_merged[:-4], GAUSS_SUFFIX)
+                file_name_text = "{}/{}_{}".format(
+                    image.path, image.base_name, TEXTURES_SUFFIX)
+                file_name_metadata = "{}/{}_{}".format(
+                    image.path, image.base_name, IMAGE_METADATA_SUFFIX)
+                file_name_stack = "{}/{}_sr_{}".format(
+                    image.path, image.base_name, STACK_SUFFIX)
+
+                print("Landsat image directory: {}".format(image.path))
+                self.crop_images(
+                    file_name_band, file_name_crop, minx, maxy, maxx, miny)
+                self.merge_images(file_name_crop, file_name_merged)
+                self.calculate_features(
+                    file_name_merged, file_name_algebra, file_name_ndvi,
+                    file_name_filt, file_name_gauss)
+                self.stack_features(
+                    place.dem_textures_file_path, file_name_merged,
+                    file_name_stack, file_name_algebra, file_name_filt,
+                    file_name_gauss, file_name_ndvi, file_name_text,
+                    file_name_metadata)
+
+
+    def rasterize_vector_files(self, places):
         for place in places:
             rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
             print("Creating ROI: " + rasterized_vector_file)
 
             # Rasterize
-            tiff_dataset = gdal.Open(place.extension_file_path, gdal.GA_ReadOnly)
+            tiff_dataset = gdal.Open(
+                place.extension_file_path, gdal.GA_ReadOnly)
             memory_driver = gdal.GetDriverByName('GTiff')
             if os.path.exists(rasterized_vector_file):
                 os.remove(rasterized_vector_file)
-            out_raster_ds = memory_driver.Create(rasterized_vector_file, tiff_dataset.RasterXSize, tiff_dataset.RasterYSize, 1, gdal.GDT_Byte)
+            out_raster_ds = memory_driver.Create(
+                rasterized_vector_file, tiff_dataset.RasterXSize,
+                tiff_dataset.RasterYSize, 1, gdal.GDT_Byte)
 
-            # Set the ROI image's projection and extent to input raster's projection and extent
+            # Set the ROI image's projection and extent to the ones of the input
             out_raster_ds.SetProjection(tiff_dataset.GetProjectionRef())
             out_raster_ds.SetGeoTransform(tiff_dataset.GetGeoTransform())
             tiff_dataset = None
@@ -251,67 +309,28 @@ class Main(QgsTask):
             vector_dataset = ogr.Open(place.vector_file_path)
             layer = vector_dataset.GetLayerByIndex(0)
             # Rasterize the shapefile layer to our new dataset
-            status = gdal.RasterizeLayer(out_raster_ds, [1], layer, None, None,
-                                         [0], ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
+            status = gdal.RasterizeLayer(
+                out_raster_ds, [1], layer, None, None, [0],
+                ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
 
             # Close dataset
             out_raster_ds = None
-
             if status != 0:
                 print("Error creating rasterized tiff")
-            else:
-                print("Rasterize tiff created")
 
 
-    def add_samples(self, place, classifier, rasterized_vector_file, do_training):
-        for image in place.images:
-            stack_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, STACK_SUFFIX)
-            if do_training:
-                classifier.add_training_samples(stack_file_name, rasterized_vector_file)
-            else:
-                classifier.add_test_samples(stack_file_name, rasterized_vector_file)
-
-
-    def check_classes(self, places):
-        output = []
-        for place in places:
-            rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
-            roi_ds = gdal.Open(rasterized_vector_file, gdal.GA_ReadOnly)
-            roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
-
-            classes = np.unique(roi)
-            # Iterate over all class labels in the ROI image, printing out some information
-            for c in classes:
-                print('Class {c} contains {n} pixels'.format(c=c, n=(roi == c).sum()))
-                output.append('Class {c} contains {n} pixels'.format(c=c, n=(roi == c).sum()))
-
-            # Find how many non-zero entries there are
-            n_samples = (roi > 0).sum()
-            print('There are {n} samples'.format(n=n_samples))
-            output.append('There are {n} samples'.format(n=n_samples))
-
-        return output
-
-    def predict(self, places, classifier, time_stamp):
-        output_files = []
-        for place in places:
-            for image in place.images:
-                stack_file_name = "{}/{}_sr_{}".format(image.path, image.base_name, STACK_SUFFIX)
-                output_file = "{}/{}_sr_{}_{}.tif".format(image.path, image.base_name, PREDICTION_SUFFIX, time_stamp.replace(" ", "_").replace(":","-"))
-                output_files.append(output_file)
-                classifier.predict_an_image(stack_file_name, output_file)
-        return output_files
-
-
-    # def calculate_threshold(self):
-    #     return threshold.calculate_threshold()
-
-    def pre_process_images(self, places):
-        # Files to be cropped according the extension_file (all layers to be cropped and merged)
-        self.crop_images(places)
-        self.merge_images(places)
-        self.calculate_features(places)
-        self.stack_features(places)
+    def calculate_total_features(self):
+        self.features_total = 7
+        if self.do_algebra:
+            self.features_total += 4
+        if self.do_filters:
+            self.features_total += 14
+        if self.do_ndvi:
+            self.features_total += 1
+        if self.do_textures:
+            self.features_total += 35
+        if self.do_dem:
+            self.features_total += 7
 
 
     def __init__(self, training_directory, do_algebra, do_filters, do_ndvi,
@@ -330,8 +349,12 @@ class Main(QgsTask):
         self.do_prediction = do_prediction
         self.prediction_directory = prediction_directory
         self.exception = None
+        self.features_total = 0
         self.li = lumberjack_instance
         self.output_files = []
+        self.classes_training = None
+        self.classes_output = None
+
 
     def run(self):
         """Here you implement your heavy lifting.
@@ -341,54 +364,61 @@ class Main(QgsTask):
         internally and raise them in self.finished
         """
         try:
-            QgsMessageLog.logMessage('Started task "{}"'.format(self.description()), MESSAGE_CATEGORY, Qgis.Info)
-            self.setProgress(0)
+            QgsMessageLog.logMessage('Started task "{}"'.format(
+                self.description()), MESSAGE_CATEGORY, Qgis.Info)
 
             self.start_time_str = str(datetime.datetime.now())
-            print("============================= " + self.start_time_str + " =============================")
+            print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
 
+            self.calculate_total_features()
+
             places_training = self.obtain_places(self.training_directory)
+
+            self.rasterize_vector_files(places_training)
             self.pre_process_images(places_training)
 
             # Create classifier and add samples to train
             classifier = Classifier()
-            self.rasterize_files(places_training)
             self.classes_training = self.check_classes(places_training)
             for place in places_training:
-                self.add_samples(place, classifier, place.vector_file_path[:-4] + ".tif", True)
+                for image in place.images:
+                    stack_file_name = "{}/{}_sr_{}".format(
+                        image.path, image.base_name, STACK_SUFFIX)
+                    classifier.add_training_samples(
+                        stack_file_name, place.vector_file_path[:-4]+".tif")
 
-            self.setProgress(30)
             if self.isCanceled():
                 return False
 
-            self.classes_output = None
             if (self.do_testing):
                 places_testing = self.obtain_places(self.testing_directory)
+                self.rasterize_vector_files(places_testing)
                 self.pre_process_images(places_testing)
-                self.rasterize_files(places_testing)
                 self.classes_output = self.check_classes(places_testing)
                 for place in places_testing:
-                    # self.check_classes(rasterized_vector_file)
-                    self.add_samples(place, classifier,  place.vector_file_path[:-4] + ".tif", False)
+                    for image in place.images:
+                        stack_file_name = "{}/{}_sr_{}".format(
+                            image.path, image.base_name, STACK_SUFFIX)
+                        classifier.add_testing_samples(
+                            stack_file_name, place.vector_file_path[:-4]+".tif")
 
-            self.setProgress(60)
             if self.isCanceled():
                 return False
 
             # Build forest of trees and calculate metrics
             self.metrics = classifier.fit_and_calculate_metrics(0.25)
 
-            self.setProgress(75)
             if self.isCanceled():
                 return False
 
             if self.do_prediction:
-                places_prediction = self.obtain_places(self.prediction_directory)
+                places_prediction = self.obtain_places(
+                    self.prediction_directory)
                 self.pre_process_images(places_prediction)
-                self.output_files = self.predict(places_prediction, classifier, self.start_time_str[:19])
+                self.output_files = self.predict(
+                    places_prediction, classifier, self.start_time_str[:19])
 
-            self.setProgress(100)
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished in {} seconds".format(str(self.elapsed_time)))
@@ -396,30 +426,36 @@ class Main(QgsTask):
             if self.isCanceled():
                 return False
 
+            self.setProgress(100)
             return True
 
         except Exception as e:
             self.exception = e
             return False
 
+
     def finished(self, result):
         """
-        This function is automatically called when the task has completed (successfully or not).
-        You implement finished() to do whatever follow-up stuff should happen after the task is complete.
-        finished is always called from the main thread, so it's safe
-        to do GUI operations and raise Python exceptions here.
+        This function is automatically called when the task has completed
+            (successfully or not).
+        You implement finished() to do whatever follow-up stuff should happen
+            after the task is complete. finished is always called from the main
+            thread, so it's safe to do GUI operations and raise Python
+            exceptions here.
         result is the return value from self.run.
         """
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
                 'Training Directory: {td})'.format(
-                  name=self.description(),
-                  time=self.elapsed_time,
-                  td=self.training_directory),
-              MESSAGE_CATEGORY, Qgis.Success)
+                    name=self.description(),
+                    time=self.elapsed_time,
+                    td=self.training_directory),
+                MESSAGE_CATEGORY, Qgis.Success)
 
-            self.li.notify_metrics(self.start_time_str, self.classes_training, self.classes_output, self.metrics, self.elapsed_time)
+            self.li.notify_metrics(
+                self.start_time_str, self.classes_training, self.classes_output,
+                self.metrics, self.elapsed_time)
             self.li.notify_task(self.start_time_str, self.output_files)
 
         else:
@@ -437,6 +473,7 @@ class Main(QgsTask):
                         exception=self.exception),
                     MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception
+
 
     def cancel(self):
         QgsMessageLog.logMessage(
