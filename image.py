@@ -1,5 +1,6 @@
 class Image:
 
-    def __init__(self, path, base_name):
+    def __init__(self, path):
         self.path = path
-        self.base_name = base_name
+        self.base_name = ""
+        self.extra_features = ""

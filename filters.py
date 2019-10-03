@@ -49,7 +49,7 @@ def output_tiff(dataset, img_filtered, file_output):
     out_raster_ds = None
 
 
-def generate_filter_file(file_input, file_output_median, file_output_gaussian, window_size=4, sigma=1):
+def generate_filter_file(file_input, file_output_median=None, file_output_gaussian=None, window_size=4, sigma=1):
     start_time = time.time()
     print("Performing filters...")
     # Opens the gdal dataset

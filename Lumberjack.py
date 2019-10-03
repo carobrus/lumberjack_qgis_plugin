@@ -34,7 +34,8 @@ from .resources import *
 from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
-from .main import Main
+from .traintask import TrainTask
+from .features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
 
 import sys
 
@@ -77,7 +78,7 @@ class Lumberjack:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
-        self.task = None
+        self.train_task = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -249,19 +250,29 @@ class Lumberjack:
 
             self.dlg.finished.connect(self.result)
 
+            self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Training2")
+
         self.dlg.open()
 
 
     def result(self, result):
         if result:
-            self.task = Main(
-                training_directory = self.dlg.lineEdit_trainingDirectory.text(),
+            features = []
+            if self.dlg.checkBox_bandsAlgebra.isChecked():
+                features.append(AlgebraFeature())
+            if self.dlg.checkBox_medianFilter.isChecked():
+                features.append(FilterFeature())
+                features.append(FilterGaussFeature())
+            if self.dlg.checkBox_ndvi.isChecked():
+                features.append(NdviFeature())
+            if self.dlg.checkBox_dem.isChecked():
+                features.append(DayFeature())
+            # if self.dlg.checkBox_textures.isChecked():
+            #     features.append(TextureFeature())
 
-                do_algebra = self.dlg.checkBox_bandsAlgebra.isChecked(),
-                do_filters = self.dlg.checkBox_medianFilter.isChecked(),
-                do_ndvi = self.dlg.checkBox_ndvi.isChecked(),
-                do_textures =  self.dlg.checkBox_textures.isChecked(),
-                do_dem = self.dlg.checkBox_dem.isChecked(),
+            self.train_task = TrainTask(
+                training_directory = self.dlg.lineEdit_trainingDirectory.text(),
+                features = features,
 
                 do_testing = self.dlg.checkBox_testing.isChecked(),
                 testing_directory = self.dlg.lineEdit_testingDirectory.text(),
@@ -271,15 +282,20 @@ class Lumberjack:
                 lumberjack_instance = self
                 )
 
-            QgsApplication.taskManager().addTask(self.task)
+            QgsApplication.taskManager().addTask(self.train_task)
 
 
-        # Boxplots
-        # data_plotbox = main.calculate_threshold()
-        # print(str(data_plotbox.shape))
-        # print(str(data_plotbox[:,0:7].shape))
-        # self.plotboxWindow = PlotboxWindow(self.dlg, data=data_plotbox[:,0:7])
-        # self.plotboxWindow.show()
+    def notify_training(self, start_time, classes_training, total_samples, time):
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Classes when training:")
+        for i in classes_training:
+            self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
+        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText("")
+
+        self.dlg.open()
+
 
     def notify_metrics(self, start_time, classes_training, classes_output, metrics, time):
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))

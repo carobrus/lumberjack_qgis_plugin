@@ -21,21 +21,17 @@ MESSAGE_CATEGORY = 'Lumberjack'
 IMAGE_METADATA_SUFFIX = "MTL.txt"
 EXTENSION_FILE_SUFFIX = "ext.tif"
 DEM_TEXTURES_SUFFIX = "textures.tif"
-ALGEBRA_SUFFIX = "alge.tif"
-NDVI_SUFFIX =  "ndvi.tif"
-FILTER_SUFFIX = "filt.tif"
-GAUSS_SUFFIX = "gaus.tif"
+TEXTURES_SUFFIX = "text.tif"
 CROP_SUFFIX = "crop.tif"
 MERGED_SUFFIX = "merged.tif"
-STACK_SUFFIX = "stack.tif"
-TEXTURES_SUFFIX = "text.tif"
+STACK_SUFFIX = "stack.csv"
 SHAPEFILE_SUFFIX = "roi.shp"
 PREDICTION_SUFFIX = "predic"
 BAND_TOTAL = 7
 
 
 class Main(QgsTask):
-
+    MESSAGE_CATEGORY = 'Lumberjack'
 
     def obtain_places(self, root_directory):
         places = []
@@ -46,11 +42,14 @@ class Main(QgsTask):
                 for image_directory_or_file in os.scandir(place.directory_path):
                     if (image_directory_or_file.is_dir()):
                         image_directory = str(image_directory_or_file.path)
+                        image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
                             image_subfile_path = str(image_subfile.path)
                             if (image_subfile_path[-(len(IMAGE_METADATA_SUFFIX)):] == IMAGE_METADATA_SUFFIX):
-                                base_name = image_subfile_path[-48:-8]
-                        place.images.append(Image(image_directory, base_name))
+                                image.base_name = image_subfile_path[-48:-8]
+                            elif (image_subfile_path[-(len(TEXTURES_SUFFIX)):] == TEXTURES_SUFFIX):
+                                image.extra_features = image_subfile_path
+                        place.images.append(image)
                     elif (image_directory_or_file.is_file()):
                         file_path = str(image_directory_or_file.path)
                         if (file_path[-(len(EXTENSION_FILE_SUFFIX)):] == EXTENSION_FILE_SUFFIX):
@@ -73,11 +72,8 @@ class Main(QgsTask):
         return minx, maxy, maxx, miny
 
 
-    def crop_images(self, file_name_band, file_name_crop,
-                    minx, maxy, maxx, miny):
-        # Crops all images in the directory according to the extension.
-        outRaster = None
-        outband = None
+    def crop_images(self, file_name_band, file_name_crop, minx, maxy, maxx, miny):
+        # Crops all images according to the extension.
         for i in range(1, BAND_TOTAL+1):
             # Crop image to extension
             command_translate = "gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}\" \"{}\""
@@ -85,160 +81,37 @@ class Main(QgsTask):
                 minx, maxy, maxx, miny, file_name_band.format(i),
                 file_name_crop.format(i)), stdout=open(os.devnull, 'wb'),
                 shell=True)
-        # TODO: Remove cropped files after merged
 
 
-    def merge_images(self, file_name_crop, file_name_merged):
-        for i in range(1, BAND_TOTAL+1):
-            file_name_crop_n = file_name_crop.format(i)
-            print("File Name Crop: ", file_name_crop_n)
-            dataset = gdal.Open(file_name_crop_n, gdal.GA_ReadOnly)
-            if i == 1:
-                driver = gdal.GetDriverByName('GTiff')
-                output_dataset = driver.Create(
-                    file_name_merged, dataset.RasterXSize, dataset.RasterYSize,
-                    BAND_TOTAL, gdal.GDT_Int16)
-                output_dataset.SetGeoTransform(dataset.GetGeoTransform())
-                output_dataset.SetProjection(dataset.GetProjection())
-            band_cropped = dataset.GetRasterBand(1).ReadAsArray()
-            outband = output_dataset.GetRasterBand(i)
-            outband.WriteArray(band_cropped)
+    def merge_images(self, files, file_name_merged, bands_amount):
+        bands_acum = 0
+        output_dataset = None
+        print("File Name Merged: " + file_name_merged)
+
+        dataset = gdal.Open(files[0], gdal.GA_ReadOnly)
+        driver = gdal.GetDriverByName('GTiff')
+        output_dataset = driver.Create(
+            file_name_merged, dataset.RasterXSize, dataset.RasterYSize,
+            bands_amount, gdal.GDT_Int16)
+        output_dataset.SetGeoTransform(dataset.GetGeoTransform())
+        output_dataset.SetProjection(dataset.GetProjection())
+        dataset = None
+
+        for i, file_path in enumerate(files):
+            dataset = gdal.Open(file_path, gdal.GA_ReadOnly)
+            for j in range(dataset.RasterCount):
+                bands_acum += 1
+                band_read = dataset.GetRasterBand(j+1).ReadAsArray()
+                outband = output_dataset.GetRasterBand(bands_acum)
+                outband.WriteArray(band_read)
 
 
-    def calculate_features(self, file_name_merged, file_name_algebra,
-                           file_name_ndvi, file_name_filt, file_name_gauss):
-        print("Generating features to file: {}".format(file_name_merged))
-        if self.do_algebra:
-            bands_algebra.generate_algebra_file(
-                file_name_merged, file_name_algebra)
-        if self.do_ndvi:
-            ndvi.generate_ndvi_file(file_name_merged, file_name_ndvi)
-        if self.do_filters:
-            filters.generate_filter_file(
-                file_name_merged, file_name_filt, file_name_gauss)
-
-
-    def stack(self, file_to_stack, output_dataset, band_num):
-        dataset = gdal.Open(file_to_stack, gdal.GA_ReadOnly)
-        for band_number in range(dataset.RasterCount):
-            band_num += 1
-            band = dataset.GetRasterBand(band_number + 1)
-            outband = output_dataset.GetRasterBand(band_num)
-            outband.WriteArray(band.ReadAsArray())
-        return band_num
-
-
-    def stack_features(self, dem_textures_file_path, file_name_merged,
-                       file_name_stack, file_name_algebra, file_name_filt,
-                       file_name_gauss, file_name_ndvi, file_name_text,
-                       file_name_metadata):
-        # Create the image that's going to stack all the features
-        print("Creating file: {}".format(file_name_stack))
-
-        outband = None
-        out_raster_ds = None
-        dataset = gdal.Open(file_name_merged, gdal.GA_ReadOnly)
-        memory_driver = gdal.GetDriverByName('GTiff')
-        if os.path.exists(file_name_stack):
-            os.remove(file_name_stack)
-        out_raster_ds = memory_driver.Create(
-            file_name_stack, dataset.RasterXSize, dataset.RasterYSize,
-            self.features_total, gdal.GDT_Float32)
-        out_raster_ds.SetProjection(dataset.GetProjectionRef())
-        out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
-
-        band_num = 0
-        # Add merged file bands
-        for band_number in range(dataset.RasterCount):
-            band_num += 1
-            band = dataset.GetRasterBand(band_number + 1)
-            outband = out_raster_ds.GetRasterBand(band_num)
-            outband.WriteArray(band.ReadAsArray())
-
-        if self.do_algebra:
-            band_num = self.stack(file_name_algebra, out_raster_ds, band_num)
-        if self.do_filters:
-            band_num = self.stack(file_name_filt, out_raster_ds, band_num)
-            band_num = self.stack(file_name_gauss, out_raster_ds, band_num)
-        if self.do_ndvi:
-            band_num = self.stack(file_name_ndvi, out_raster_ds, band_num)
-        if self.do_textures:
-            band_num = self.stack(file_name_text, out_raster_ds, band_num)
-        if self.do_dem:
-            band_num = self.stack(dem_textures_file_path, out_raster_ds, band_num)
-            date = self.get_date_from_metadata(file_name_metadata)
-            number_of_day = self.transform_day(date)
-            number_of_day_normalized = number_of_day / 366
-            number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
-            band_num += 1
-            band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_normalized)
-            outband = out_raster_ds.GetRasterBand(band_num)
-            outband.WriteArray(band)
-            band_num += 1
-            band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_transform)
-            outband = out_raster_ds.GetRasterBand(band_num)
-            outband.WriteArray(band)
-
-        outband.FlushCache()
-        out_raster_ds = None
-
-
-    def transform_day(self, date):
-        year, month, day = date.split("-")
-        year = int(year)
-        month = int(month)
-        day = int(day)
-        number_of_day = (datetime.date(year, month, day) -
-                         datetime.date(year, 1, 1)).days + 1
-        return number_of_day
-
-
-    def get_date_from_metadata(self, file):
-        f = open(file, 'r')
-        for line in f.readlines():
-            if "DATE_ACQUIRED =" in line:
-                l = line.split("=")
-                return l[1]
-
-
-    def predict(self, places, classifier, time_stamp):
-        output_files = []
-        for place in places:
-            for image in place.images:
-                stack_file_name = "{}/{}_sr_{}".format(
-                    image.path, image.base_name, STACK_SUFFIX)
-                output_file = "{}/{}_sr_{}_{}.tif".format(
-                    image.path, image.base_name, PREDICTION_SUFFIX,
-                    time_stamp.replace(" ", "_").replace(":","-"))
-                output_files.append(output_file)
-                classifier.predict_an_image(stack_file_name, output_file)
-        return output_files
-
-
-    # def calculate_threshold(self):
-    #     return threshold.calculate_threshold()
-
-
-    def check_classes(self, places):
-        output = []
-        for place in places:
-            rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
-            roi_ds = gdal.Open(rasterized_vector_file, gdal.GA_ReadOnly)
-            roi = roi_ds.GetRasterBand(1).ReadAsArray().astype(np.uint8)
-
-            classes = np.unique(roi)
-            # Iterate over all class labels in the ROI image
-            for c in classes:
-                print('Class {c} contains {n} pixels'.format(
-                    c=c, n=(roi == c).sum()))
-                output.append('Class {c} contains {n} pixels'.format(
-                    c=c, n=(roi == c).sum()))
-
-            # Find how many non-zero entries there are
-            n_samples = (roi > 0).sum()
-            print('There are {n} samples'.format(n=n_samples))
-            output.append('There are {n} samples'.format(n=n_samples))
-        return output
+    def calculate_total_features(self, files):
+        total = 0
+        for file in files:
+            dataset = gdal.Open(file, gdal.GA_ReadOnly)
+            total += dataset.RasterCount
+        return total
 
 
     def pre_process_images(self, places):
@@ -247,39 +120,44 @@ class Main(QgsTask):
                 place.extension_file_path)
             for image in place.images:
                 # image represent each landsat image (a folder with the bands)
+                print("Landsat image directory: {}".format(image.path))
+
                 file_name_band = "{}/{}_sr_band{}.tif".format(
                     image.path, image.base_name, "{}")
-                file_name_crop = "{}/{}_sr_band{}_{}.tif".format(
+                file_name_crop = "{}/{}_sr_band{}_{}".format(
                     image.path, image.base_name, "{}", CROP_SUFFIX)
                 file_name_merged = "{}/{}_sr_{}".format(
                     image.path, image.base_name, MERGED_SUFFIX)
-                file_name_algebra = "{}_{}".format(
-                    file_name_merged[:-4], ALGEBRA_SUFFIX)
-                file_name_ndvi = "{}_{}".format(
-                    file_name_merged[:-4], NDVI_SUFFIX)
-                file_name_filt = "{}_{}".format(
-                    file_name_merged[:-4], FILTER_SUFFIX)
-                file_name_gauss = "{}_{}".format(
-                    file_name_merged[:-4], GAUSS_SUFFIX)
-                file_name_text = "{}/{}_{}".format(
-                    image.path, image.base_name, TEXTURES_SUFFIX)
-                file_name_metadata = "{}/{}_{}".format(
-                    image.path, image.base_name, IMAGE_METADATA_SUFFIX)
-                file_name_stack = "{}/{}_sr_{}".format(
-                    image.path, image.base_name, STACK_SUFFIX)
 
-                print("Landsat image directory: {}".format(image.path))
                 self.crop_images(
                     file_name_band, file_name_crop, minx, maxy, maxx, miny)
-                self.merge_images(file_name_crop, file_name_merged)
-                self.calculate_features(
-                    file_name_merged, file_name_algebra, file_name_ndvi,
-                    file_name_filt, file_name_gauss)
-                self.stack_features(
-                    place.dem_textures_file_path, file_name_merged,
-                    file_name_stack, file_name_algebra, file_name_filt,
-                    file_name_gauss, file_name_ndvi, file_name_text,
-                    file_name_metadata)
+
+                files_to_merge = []
+                for i in range(1, BAND_TOTAL+1):
+                    files_to_merge.append(file_name_crop.format(i))
+                self.merge_images(files_to_merge, file_name_merged, BAND_TOTAL)
+                for file in files_to_merge:
+                    if os.path.exists(file):
+                        os.remove(file)
+
+                files = []
+                files.append(file_name_merged)
+                for feature in self.features:
+                    feature.execute(file_name_merged)
+                    files.append(feature.file_out)
+                files.append(image.extra_features)
+                files.append(place.dem_textures_file_path)
+
+                file_name_stack = "{}/{}_sr_{}_{}".format(
+                    image.path, image.base_name, "{}", STACK_SUFFIX)
+
+                self.filter_features(
+                    place.vector_file_path[:-4]+".tif", files, file_name_stack)
+
+                for file in files:
+                    if (file != image.extra_features)  and (file != place.dem_textures_file_path):
+                        if os.path.exists(file):
+                            os.remove(file)
 
 
     def rasterize_vector_files(self, places):
@@ -319,42 +197,8 @@ class Main(QgsTask):
                 print("Error creating rasterized tiff")
 
 
-    def calculate_total_features(self):
-        self.features_total = 7
-        if self.do_algebra:
-            self.features_total += 4
-        if self.do_filters:
-            self.features_total += 14
-        if self.do_ndvi:
-            self.features_total += 1
-        if self.do_textures:
-            self.features_total += 35
-        if self.do_dem:
-            self.features_total += 7
-
-
-    def __init__(self, training_directory, do_algebra, do_filters, do_ndvi,
-                 do_textures, do_dem, do_testing, testing_directory,
-                 do_prediction, prediction_directory,
-                 lumberjack_instance):
+    def __init__(self, description, task):
         super().__init__("Lumberjack execution", QgsTask.CanCancel)
-        self.training_directory = training_directory
-        self.do_algebra = do_algebra
-        self.do_filters = do_filters
-        self.do_ndvi = do_ndvi
-        self.do_textures = do_textures
-        self.do_dem = do_dem
-        self.do_testing = do_testing
-        self.testing_directory = testing_directory
-        self.do_prediction = do_prediction
-        self.prediction_directory = prediction_directory
-        self.exception = None
-        self.features_total = 0
-        self.li = lumberjack_instance
-        self.output_files = []
-        self.classes_training = None
-        self.classes_output = None
-
 
     def run(self):
         """Here you implement your heavy lifting.
@@ -363,75 +207,72 @@ class Main(QgsTask):
         Raising exceptions will crash QGIS, so we handle them
         internally and raise them in self.finished
         """
-        try:
-            QgsMessageLog.logMessage('Started task "{}"'.format(
-                self.description()), MESSAGE_CATEGORY, Qgis.Info)
-
-            self.start_time_str = str(datetime.datetime.now())
-            print("=" * 30 + self.start_time_str + "=" * 30)
-            self.start_time = time.time()
-
-            self.calculate_total_features()
-
-            places_training = self.obtain_places(self.training_directory)
-
-            self.rasterize_vector_files(places_training)
-            self.pre_process_images(places_training)
-
-            # Create classifier and add samples to train
-            classifier = Classifier()
-            self.classes_training = self.check_classes(places_training)
-            for place in places_training:
-                for image in place.images:
-                    stack_file_name = "{}/{}_sr_{}".format(
-                        image.path, image.base_name, STACK_SUFFIX)
-                    classifier.add_training_samples(
-                        stack_file_name, place.vector_file_path[:-4]+".tif")
-
-            if self.isCanceled():
-                return False
-
-            if (self.do_testing):
-                places_testing = self.obtain_places(self.testing_directory)
-                self.rasterize_vector_files(places_testing)
-                self.pre_process_images(places_testing)
-                self.classes_output = self.check_classes(places_testing)
-                for place in places_testing:
-                    for image in place.images:
-                        stack_file_name = "{}/{}_sr_{}".format(
-                            image.path, image.base_name, STACK_SUFFIX)
-                        classifier.add_testing_samples(
-                            stack_file_name, place.vector_file_path[:-4]+".tif")
-
-            if self.isCanceled():
-                return False
-
-            # Build forest of trees and calculate metrics
-            self.metrics = classifier.fit_and_calculate_metrics(0.25)
-
-            if self.isCanceled():
-                return False
-
-            if self.do_prediction:
-                places_prediction = self.obtain_places(
-                    self.prediction_directory)
-                self.pre_process_images(places_prediction)
-                self.output_files = self.predict(
-                    places_prediction, classifier, self.start_time_str[:19])
-
-
-            self.elapsed_time = time.time() - self.start_time
-            print("Finished in {} seconds".format(str(self.elapsed_time)))
-
-            if self.isCanceled():
-                return False
-
-            self.setProgress(100)
-            return True
-
-        except Exception as e:
-            self.exception = e
-            return False
+        # try:
+        #     QgsMessageLog.logMessage('Started task "{}"'.format(
+        #         self.description()), MESSAGE_CATEGORY, Qgis.Info)
+        #
+        #     self.start_time_str = str(datetime.datetime.now())
+        #     print("=" * 30 + self.start_time_str + "=" * 30)
+        #     self.start_time = time.time()
+        #
+        #     places_training = self.obtain_places(self.training_directory)
+        #
+        #     self.rasterize_vector_files(places_training)
+        #     self.pre_process_images(places_training)
+        #
+        #     # Create classifier and add samples to train
+        #     classifier = Classifier()
+        #     self.classes_training = self.check_classes(places_training)
+        #     for place in places_training:
+        #         for image in place.images:
+        #             file_name_stack = "{}/{}_sr_{}_{}".format(
+        #                 image.path, image.base_name, "{}", STACK_SUFFIX)
+        #             classifier.add_training_samples(file_name_stack)
+        #
+        #     if self.isCanceled():
+        #         return False
+        #
+        #     if (self.do_testing):
+        #         places_testing = self.obtain_places(self.testing_directory)
+        #         self.rasterize_vector_files(places_testing)
+        #         self.pre_process_images(places_testing)
+        #         self.classes_output = self.check_classes(places_testing)
+        #         for place in places_testing:
+        #             for image in place.images:
+        #                 file_name_stack = "{}/{}_sr_{}_{}".format(
+        #                     image.path, image.base_name, "{}", STACK_SUFFIX)
+        #                 classifier.add_testing_samples(file_name_stack)
+        #
+        #     if self.isCanceled():
+        #         return False
+        #
+        #     # Build forest of trees and calculate metrics
+        #     self.metrics = classifier.fit_and_calculate_metrics(0.25)
+        #
+        #     if self.isCanceled():
+        #         return False
+        #
+        #     if self.do_prediction:
+        #         places_prediction = self.obtain_places(
+        #             self.prediction_directory)
+        #         self.pre_process_images(places_prediction)
+        #         self.output_files = self.predict(
+        #             places_prediction, classifier, self.start_time_str[:19])
+        #
+        #
+        #     self.elapsed_time = time.time() - self.start_time
+        #     print("Finished in {} seconds".format(str(self.elapsed_time)))
+        #
+        #     if self.isCanceled():
+        #         return False
+        #
+        #     self.setProgress(100)
+        #     return True
+        #
+        # except Exception as e:
+        #     self.exception = e
+        #     return False
+        pass
 
 
     def finished(self, result):
@@ -444,35 +285,36 @@ class Main(QgsTask):
             exceptions here.
         result is the return value from self.run.
         """
-        if result:
-            QgsMessageLog.logMessage(
-                'Task "{name}" completed in {time} seconds\n' \
-                'Training Directory: {td})'.format(
-                    name=self.description(),
-                    time=self.elapsed_time,
-                    td=self.training_directory),
-                MESSAGE_CATEGORY, Qgis.Success)
-
-            self.li.notify_metrics(
-                self.start_time_str, self.classes_training, self.classes_output,
-                self.metrics, self.elapsed_time)
-            self.li.notify_task(self.start_time_str, self.output_files)
-
-        else:
-            if self.exception is None:
-                QgsMessageLog.logMessage(
-                    'Task "{name}" not successful but without '\
-                    'exception (probably the task was manually '\
-                    'canceled by the user)'.format(
-                        name=self.description()),
-                    MESSAGE_CATEGORY, Qgis.Warning)
-            else:
-                QgsMessageLog.logMessage(
-                    'Task "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
-                    MESSAGE_CATEGORY, Qgis.Critical)
-                raise self.exception
+        # if result:
+        #     QgsMessageLog.logMessage(
+        #         'Task "{name}" completed in {time} seconds\n' \
+        #         'Training Directory: {td})'.format(
+        #             name=self.description(),
+        #             time=self.elapsed_time,
+        #             td=self.training_directory),
+        #         MESSAGE_CATEGORY, Qgis.Success)
+        #
+        #     self.li.notify_metrics(
+        #         self.start_time_str, self.classes_training, self.classes_output,
+        #         self.metrics, self.elapsed_time)
+        #     self.li.notify_task(self.start_time_str, self.output_files)
+        #
+        # else:
+        #     if self.exception is None:
+        #         QgsMessageLog.logMessage(
+        #             'Task "{name}" not successful but without '\
+        #             'exception (probably the task was manually '\
+        #             'canceled by the user)'.format(
+        #                 name=self.description()),
+        #             MESSAGE_CATEGORY, Qgis.Warning)
+        #     else:
+        #         QgsMessageLog.logMessage(
+        #             'Task "{name}" Exception: {exception}'.format(
+        #                 name=self.description(),
+        #                 exception=self.exception),
+        #             MESSAGE_CATEGORY, Qgis.Critical)
+        #         raise self.exception
+        pass
 
 
     def cancel(self):
@@ -481,3 +323,18 @@ class Main(QgsTask):
                 name=self.description()),
             MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
+
+
+class PredictTask(Main):
+    def predict(self, places, classifier, time_stamp):
+        output_files = []
+        for place in places:
+            for image in place.images:
+                stack_file_name = "{}/{}_sr_{}_{}".format(
+                    image.path, image.base_name, "{}",STACK_SUFFIX)
+                output_file = "{}/{}_sr_{}_{}.tif".format(
+                    image.path, image.base_name, PREDICTION_SUFFIX,
+                    time_stamp.replace(" ", "_").replace(":","-"))
+                output_files.append(output_file)
+                classifier.predict_an_image(stack_file_name, output_file)
+        return output_files
