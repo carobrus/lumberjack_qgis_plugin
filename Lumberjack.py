@@ -210,10 +210,6 @@ class Lumberjack:
         filename = QFileDialog.getExistingDirectory(self.dlg, "Select training directory","")
         self.dlg.lineEdit_testingDirectory.setText(filename)
 
-    def toggle_retrain(self):
-        self.dlg.pushButton_testing.setEnabled(False)
-        self.dlg.pushButton_prediction.setEnabled(False)
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -229,18 +225,12 @@ class Lumberjack:
             self.dlg.lineEdit_predictionDirectoy.clear()
             self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
 
-            self.dlg.checkBox_bandsAlgebra.stateChanged.connect(self.toggle_retrain)
-            self.dlg.checkBox_medianFilter.stateChanged.connect(self.toggle_retrain)
-            self.dlg.checkBox_ndvi.stateChanged.connect(self.toggle_retrain)
-            self.dlg.checkBox_textures.stateChanged.connect(self.toggle_retrain)
-            self.dlg.checkBox_dem.stateChanged.connect(self.toggle_retrain)
-
             self.dlg.lineEdit_testingDirectory.clear()
             self.dlg.pushButton_testingDirectory.clicked.connect(self.select_testing_directory)
 
             self.dlg.pushButton_training.clicked.connect(self.train)
             self.dlg.pushButton_testing.clicked.connect(self.test)
-            # self.dlg.pushButton_testing.clicked.connect(self.predict)
+            self.dlg.pushButton_prediction.clicked.connect(self.predict)
 
             self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Training2")
 
@@ -266,6 +256,7 @@ class Lumberjack:
             directory = self.dlg.lineEdit_trainingDirectory.text(),
             features = self.features,
             classifier = self.classifier,
+            testing_ratio = self.dlg.checkBox_testing_ratio.isChecked(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.train_task)
 
@@ -279,6 +270,7 @@ class Lumberjack:
             directory = self.dlg.lineEdit_testingDirectory.text(),
             features = self.features,
             classifier = self.classifier,
+            testing_ratio = self.dlg.checkBox_testing_ratio.isChecked(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.test_task)
 
@@ -290,7 +282,7 @@ class Lumberjack:
             features = self.features,
             classifier = self.classifier,
             lumberjack_instance = self)
-        QgsApplication.taskManager().addTask(self.test_task)
+        QgsApplication.taskManager().addTask(self.predict_task)
 
 
     def notify_training(self, start_time, classes, total_samples, time):
@@ -307,9 +299,10 @@ class Lumberjack:
 
     def notify_testing(self, start_time, classes, total_samples, metrics, time):
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
-        for i in classes:
-            self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        if (not classes is None):
+            self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+            for i in classes:
+                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
         self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
 
         for i in metrics[:-1]:
@@ -324,7 +317,9 @@ class Lumberjack:
         self.plotWindow.show()
 
 
-    def notify_prediction(self, start_time, output_files):
+    def notify_prediction(self, start_time, output_files, time):
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
         self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
         if self.dlg.checkBox_addFile.isChecked():
             for file_path in output_files:

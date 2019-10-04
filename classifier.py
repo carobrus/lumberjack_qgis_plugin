@@ -20,6 +20,7 @@ class Classifier:
         self.__y_test = None
         self.__rf = None
 
+
     def add_samples(self, samples_file, X_data, y_labels):
         X = np.genfromtxt(samples_file.format("X"), delimiter=',', dtype=np.float32)
         y = np.genfromtxt(samples_file.format("y"), delimiter=',', dtype=np.float32)
@@ -41,6 +42,10 @@ class Classifier:
     def add_training_samples(self, samples_file):
         self.__X_train, self.__y_train = self.add_samples(
             samples_file, self.__X_train, self.__y_train)
+
+
+    def get_test_size(self):
+        return self.__y_test.shape[0]
 
 
     def fit(self, test_size):

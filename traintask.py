@@ -101,12 +101,13 @@ class TrainTask(ClassificationTask):
     STACK_SUFFIX = "stack.csv"
 
     def __init__(self, directory, features,
-                 classifier, lumberjack_instance):
+                 classifier, testing_ratio, lumberjack_instance):
         super().__init__("Lumberjack training", QgsTask.CanCancel)
 
         self.directory = directory
         self.features = features
         self.classifier = classifier
+        self.without_ratio = testing_ratio
         self.li = lumberjack_instance
 
         self.classes = None
@@ -121,7 +122,6 @@ class TrainTask(ClassificationTask):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
                 self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
-
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
@@ -149,7 +149,10 @@ class TrainTask(ClassificationTask):
                         image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
                     self.add_samples(file_name_stack)
 
-            self.classifier.fit(0)
+            if self.without_ratio:
+                self.classifier.fit(0.0)
+            else:
+                self.classifier.fit(0.25)
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished training in {} seconds".format(str(self.elapsed_time)))
@@ -196,12 +199,13 @@ class TrainTask(ClassificationTask):
 
 class TestTask(ClassificationTask):
     def __init__(self, directory, features,
-                 classifier, lumberjack_instance):
+                 classifier, testing_ratio, lumberjack_instance):
         super().__init__("Lumberjack testing", QgsTask.CanCancel)
 
         self.directory = directory
         self.features = features
         self.classifier = classifier
+        self.without_ratio = testing_ratio
         self.li = lumberjack_instance
 
         self.classes = None
@@ -216,24 +220,35 @@ class TestTask(ClassificationTask):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
                 self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
-
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
 
-            places = self.obtain_places(self.directory)
+            if self.without_ratio:
+                places = self.obtain_places(self.directory)
 
-            self.rasterize_vector_files(places)
-            self.pre_process_images(places)
+                self.rasterize_vector_files(places)
+                self.pre_process_images(places)
 
-            self.check_classes(places)
-            # Add samples to train
-            for place in places:
-                for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}_{}".format(
-                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
-                    self.add_samples(file_name_stack)
+                for place in places:
+                    for image in place.images:
+                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                            image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                        file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                        files = [file_merged]
+                        for feature in self.features:
+                            files.append(feature.file_format.format(file_merged[:-4]))
+                        self.stack_features(place.vector_file_path[:-4]+".tif", files, file_name_stack)
 
+                self.check_classes(places)
+                # Add samples to train
+                for place in places:
+                    for image in place.images:
+                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                            image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                        self.add_samples(file_name_stack)
+            else:
+                self.total_samples = self.classifier.get_test_size()
             self.metrics = self.classifier.calculate_metrics()
 
             self.elapsed_time = time.time() - self.start_time

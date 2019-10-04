@@ -14,7 +14,6 @@ GAUSS_SUFFIX = "gaus.tif"
 NDVI_SUFFIX =  "ndvi.tif"
 DAY_SUFFIX = "day.tif"
 IMAGE_METADATA_SUFFIX = "MTL.txt"
-TEXTURES_SUFFIX = "text.tif"
 
 
 class Feature:
