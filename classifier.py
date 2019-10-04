@@ -13,18 +13,18 @@ import numpy as np
 
 
 class Classifier:
-    __X_train = []
-    __y_train = []
-    __X_test = []
-    __y_test = []
-    __outfile_name = None
-    __rf = None
+    def __init__(self):
+        self.__X_train = None
+        self.__y_train = None
+        self.__X_test = None
+        self.__y_test = None
+        self.__rf = None
 
     def add_samples(self, samples_file, X_data, y_labels):
         X = np.genfromtxt(samples_file.format("X"), delimiter=',', dtype=np.float32)
         y = np.genfromtxt(samples_file.format("y"), delimiter=',', dtype=np.float32)
 
-        if (len(y_labels) == 0):
+        if (y_labels is None):
             X_data = X
             y_labels = y
         else:
@@ -43,18 +43,13 @@ class Classifier:
             samples_file, self.__X_train, self.__y_train)
 
 
-    def fit_and_calculate_metrics(self, test_size):
-        output = []
-        if ((self.__X_test == []) or (self.__y_test.size == [])):
-            X_train, X_test, y_train, y_test = train_test_split(
+    def fit(self, test_size):
+        if (test_size != 0):
+            self.__X_train, self.__X_test, self.__y_train, self.__y_test = train_test_split(
                 self.__X_train, self.__y_train, test_size=test_size)
-        else:
-            X_train, X_test = self.__X_train, self.__X_test
-            y_train, y_test = self.__y_train, self.__y_test
-        print("X_train matrix is sized: {size}".format(size=X_train.shape))
-        print("y_train array is sized: {size}".format(size=y_train.shape))
-        print("X_test matrix is sized: {size}".format(size=X_test.shape))
-        print("y_test array is sized: {size}".format(size=y_test.shape))
+
+        print("X_train matrix is sized: {size}".format(size=self.__X_train.shape))
+        print("y_train array is sized: {size}".format(size=self.__y_train.shape))
 
         # Initializes model with n_estimators trees
         # self.__rf = RandomForestClassifier(n_estimators=500, oob_score=True, n_jobs=-1)
@@ -62,21 +57,27 @@ class Classifier:
 
         print("Fitting model to training data...")
         # Build a forest of trees from the training set (X, y).
-        self.__rf = self.__rf.fit(X_train, y_train)
+        self.__rf = self.__rf.fit(self.__X_train, self.__y_train)
 
-        y_pred = self.__rf.predict(X_test)
-        c_matrix = confusion_matrix(y_test, y_pred, labels=[1,2])
+
+    def calculate_metrics(self):
+        output = []
+        y_pred = self.__rf.predict(self.__X_test)
+
+        print("X_test matrix is sized: {size}".format(size=self.__X_test.shape))
+        print("y_test array is sized: {size}".format(size=self.__y_test.shape))
+
+        c_matrix = confusion_matrix(self.__y_test, y_pred, labels=[1,2])
 
         output.append("Confusion Matrix: ")
         output.append(c_matrix)
-        output.append("Accuracy:     " + str(accuracy_score(y_test, y_pred)))
-        output.append("Precision:    " + str(precision_score(y_test, y_pred)))
-        output.append("Recall Score: " + str(recall_score(y_test, y_pred)))
-        output.append("F1 Score:     " + str(f1_score(y_test, y_pred)))
+        output.append("Accuracy:     " + str(accuracy_score(self.__y_test, y_pred)))
+        output.append("Precision:    " + str(precision_score(self.__y_test, y_pred)))
+        output.append("Recall Score: " + str(recall_score(self.__y_test, y_pred)))
+        output.append("F1 Score:     " + str(f1_score(self.__y_test, y_pred)))
 
         for i in output:
             print(i)
-
         for index, imp in enumerate(self.__rf.feature_importances_):
             print('Feature {:>4} importance: {}'.format(index+1, imp))
 

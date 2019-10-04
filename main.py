@@ -16,21 +16,17 @@ from . import ndvi
 from . import threshold
 
 
-MESSAGE_CATEGORY = 'Lumberjack'
-
 IMAGE_METADATA_SUFFIX = "MTL.txt"
 EXTENSION_FILE_SUFFIX = "ext.tif"
 DEM_TEXTURES_SUFFIX = "textures.tif"
 TEXTURES_SUFFIX = "text.tif"
 CROP_SUFFIX = "crop.tif"
 MERGED_SUFFIX = "merged.tif"
-STACK_SUFFIX = "stack.csv"
 SHAPEFILE_SUFFIX = "roi.shp"
-PREDICTION_SUFFIX = "predic"
 BAND_TOTAL = 7
 
 
-class Main(QgsTask):
+class PreProcessTask(QgsTask):
     MESSAGE_CATEGORY = 'Lumberjack'
 
     def obtain_places(self, root_directory):
@@ -140,65 +136,12 @@ class Main(QgsTask):
                     if os.path.exists(file):
                         os.remove(file)
 
-                files = []
-                files.append(file_name_merged)
                 for feature in self.features:
                     feature.execute(file_name_merged)
-                    files.append(feature.file_out)
-                files.append(image.extra_features)
-                files.append(place.dem_textures_file_path)
-
-                file_name_stack = "{}/{}_sr_{}_{}".format(
-                    image.path, image.base_name, "{}", STACK_SUFFIX)
-
-                self.filter_features(
-                    place.vector_file_path[:-4]+".tif", files, file_name_stack)
-
-                for file in files:
-                    if (file != image.extra_features)  and (file != place.dem_textures_file_path):
-                        if os.path.exists(file):
-                            os.remove(file)
-
-
-    def rasterize_vector_files(self, places):
-        for place in places:
-            rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
-            print("Creating ROI: " + rasterized_vector_file)
-
-            # Rasterize
-            tiff_dataset = gdal.Open(
-                place.extension_file_path, gdal.GA_ReadOnly)
-            memory_driver = gdal.GetDriverByName('GTiff')
-            if os.path.exists(rasterized_vector_file):
-                os.remove(rasterized_vector_file)
-            out_raster_ds = memory_driver.Create(
-                rasterized_vector_file, tiff_dataset.RasterXSize,
-                tiff_dataset.RasterYSize, 1, gdal.GDT_Byte)
-
-            # Set the ROI image's projection and extent to the ones of the input
-            out_raster_ds.SetProjection(tiff_dataset.GetProjectionRef())
-            out_raster_ds.SetGeoTransform(tiff_dataset.GetGeoTransform())
-            tiff_dataset = None
-
-            # Fill output band with the 0 blank, no class label, value
-            b = out_raster_ds.GetRasterBand(1)
-            b.Fill(0)
-
-            vector_dataset = ogr.Open(place.vector_file_path)
-            layer = vector_dataset.GetLayerByIndex(0)
-            # Rasterize the shapefile layer to our new dataset
-            status = gdal.RasterizeLayer(
-                out_raster_ds, [1], layer, None, None, [0],
-                ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
-
-            # Close dataset
-            out_raster_ds = None
-            if status != 0:
-                print("Error creating rasterized tiff")
 
 
     def __init__(self, description, task):
-        super().__init__("Lumberjack execution", QgsTask.CanCancel)
+        super().__init__(description, task)
 
     def run(self):
         """Here you implement your heavy lifting.
@@ -207,72 +150,7 @@ class Main(QgsTask):
         Raising exceptions will crash QGIS, so we handle them
         internally and raise them in self.finished
         """
-        # try:
-        #     QgsMessageLog.logMessage('Started task "{}"'.format(
-        #         self.description()), MESSAGE_CATEGORY, Qgis.Info)
-        #
-        #     self.start_time_str = str(datetime.datetime.now())
-        #     print("=" * 30 + self.start_time_str + "=" * 30)
-        #     self.start_time = time.time()
-        #
-        #     places_training = self.obtain_places(self.training_directory)
-        #
-        #     self.rasterize_vector_files(places_training)
-        #     self.pre_process_images(places_training)
-        #
-        #     # Create classifier and add samples to train
-        #     classifier = Classifier()
-        #     self.classes_training = self.check_classes(places_training)
-        #     for place in places_training:
-        #         for image in place.images:
-        #             file_name_stack = "{}/{}_sr_{}_{}".format(
-        #                 image.path, image.base_name, "{}", STACK_SUFFIX)
-        #             classifier.add_training_samples(file_name_stack)
-        #
-        #     if self.isCanceled():
-        #         return False
-        #
-        #     if (self.do_testing):
-        #         places_testing = self.obtain_places(self.testing_directory)
-        #         self.rasterize_vector_files(places_testing)
-        #         self.pre_process_images(places_testing)
-        #         self.classes_output = self.check_classes(places_testing)
-        #         for place in places_testing:
-        #             for image in place.images:
-        #                 file_name_stack = "{}/{}_sr_{}_{}".format(
-        #                     image.path, image.base_name, "{}", STACK_SUFFIX)
-        #                 classifier.add_testing_samples(file_name_stack)
-        #
-        #     if self.isCanceled():
-        #         return False
-        #
-        #     # Build forest of trees and calculate metrics
-        #     self.metrics = classifier.fit_and_calculate_metrics(0.25)
-        #
-        #     if self.isCanceled():
-        #         return False
-        #
-        #     if self.do_prediction:
-        #         places_prediction = self.obtain_places(
-        #             self.prediction_directory)
-        #         self.pre_process_images(places_prediction)
-        #         self.output_files = self.predict(
-        #             places_prediction, classifier, self.start_time_str[:19])
-        #
-        #
-        #     self.elapsed_time = time.time() - self.start_time
-        #     print("Finished in {} seconds".format(str(self.elapsed_time)))
-        #
-        #     if self.isCanceled():
-        #         return False
-        #
-        #     self.setProgress(100)
-        #     return True
-        #
-        # except Exception as e:
-        #     self.exception = e
-        #     return False
-        pass
+        raise NotImplementedError("Subclasses mut override run()")
 
 
     def finished(self, result):
@@ -285,56 +163,12 @@ class Main(QgsTask):
             exceptions here.
         result is the return value from self.run.
         """
-        # if result:
-        #     QgsMessageLog.logMessage(
-        #         'Task "{name}" completed in {time} seconds\n' \
-        #         'Training Directory: {td})'.format(
-        #             name=self.description(),
-        #             time=self.elapsed_time,
-        #             td=self.training_directory),
-        #         MESSAGE_CATEGORY, Qgis.Success)
-        #
-        #     self.li.notify_metrics(
-        #         self.start_time_str, self.classes_training, self.classes_output,
-        #         self.metrics, self.elapsed_time)
-        #     self.li.notify_task(self.start_time_str, self.output_files)
-        #
-        # else:
-        #     if self.exception is None:
-        #         QgsMessageLog.logMessage(
-        #             'Task "{name}" not successful but without '\
-        #             'exception (probably the task was manually '\
-        #             'canceled by the user)'.format(
-        #                 name=self.description()),
-        #             MESSAGE_CATEGORY, Qgis.Warning)
-        #     else:
-        #         QgsMessageLog.logMessage(
-        #             'Task "{name}" Exception: {exception}'.format(
-        #                 name=self.description(),
-        #                 exception=self.exception),
-        #             MESSAGE_CATEGORY, Qgis.Critical)
-        #         raise self.exception
-        pass
+        raise NotImplementedError("Subclasses mut override finished()")
 
 
     def cancel(self):
         QgsMessageLog.logMessage(
             'Task "{name}" was canceled'.format(
                 name=self.description()),
-            MESSAGE_CATEGORY, Qgis.Info)
+            Main.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
-
-
-class PredictTask(Main):
-    def predict(self, places, classifier, time_stamp):
-        output_files = []
-        for place in places:
-            for image in place.images:
-                stack_file_name = "{}/{}_sr_{}_{}".format(
-                    image.path, image.base_name, "{}",STACK_SUFFIX)
-                output_file = "{}/{}_sr_{}_{}.tif".format(
-                    image.path, image.base_name, PREDICTION_SUFFIX,
-                    time_stamp.replace(" ", "_").replace(":","-"))
-                output_files.append(output_file)
-                classifier.predict_an_image(stack_file_name, output_file)
-        return output_files

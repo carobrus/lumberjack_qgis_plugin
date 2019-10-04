@@ -1,25 +1,48 @@
 from .main import *
 
-class TrainTask(Main):
+class ClassificationTask(PreProcessTask):
+    def __init__(self, description, task):
+        super().__init__(description, task)
 
-    def __init__(self, training_directory, features,
-                 do_testing, testing_directory,
-                 do_prediction, prediction_directory, lumberjack_instance):
-        super().__init__("Lumberjack training", QgsTask.CanCancel)
 
-        self.training_directory = training_directory
-        self.do_testing = do_testing
-        self.testing_directory = testing_directory
-        self.do_prediction = do_prediction
-        self.prediction_directory = prediction_directory
-        self.li = lumberjack_instance
+    def rasterize_vector_files(self, places):
+        for place in places:
+            rasterized_vector_file = place.vector_file_path[:-4] + ".tif"
+            print("Creating ROI: " + rasterized_vector_file)
 
-        self.exception = None
-        self.output_files = []
-        self.classes = None
-        self.features = features
+            # Rasterize
+            tiff_dataset = gdal.Open(
+                place.extension_file_path, gdal.GA_ReadOnly)
+            memory_driver = gdal.GetDriverByName('GTiff')
+            if os.path.exists(rasterized_vector_file):
+                os.remove(rasterized_vector_file)
+            out_raster_ds = memory_driver.Create(
+                rasterized_vector_file, tiff_dataset.RasterXSize,
+                tiff_dataset.RasterYSize, 1, gdal.GDT_Byte)
 
-    def filter_features(self, rasterized_file_path, files, file_name_stack):
+            # Set the ROI image's projection and extent to the ones of the input
+            out_raster_ds.SetProjection(tiff_dataset.GetProjectionRef())
+            out_raster_ds.SetGeoTransform(tiff_dataset.GetGeoTransform())
+            tiff_dataset = None
+
+            # Fill output band with the 0 blank, no class label, value
+            b = out_raster_ds.GetRasterBand(1)
+            b.Fill(0)
+
+            vector_dataset = ogr.Open(place.vector_file_path)
+            layer = vector_dataset.GetLayerByIndex(0)
+            # Rasterize the shapefile layer to our new dataset
+            status = gdal.RasterizeLayer(
+                out_raster_ds, [1], layer, None, None, [0],
+                ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=id'])
+
+            # Close dataset
+            out_raster_ds = None
+            if status != 0:
+                print("Error creating rasterized tiff")
+
+
+    def stack_features(self, rasterized_file_path, files, file_name_stack):
         roi_dataset = gdal.Open(rasterized_file_path, gdal.GA_ReadOnly)
         roi = roi_dataset.GetRasterBand(1).ReadAsArray().astype(np.uint8)
 
@@ -74,36 +97,65 @@ class TrainTask(Main):
             self.classes.append('There are {n} samples'.format(n=n_samples))
 
 
+class TrainTask(ClassificationTask):
+    STACK_SUFFIX = "stack.csv"
+
+    def __init__(self, directory, features,
+                 classifier, lumberjack_instance):
+        super().__init__("Lumberjack training", QgsTask.CanCancel)
+
+        self.directory = directory
+        self.features = features
+        self.classifier = classifier
+        self.li = lumberjack_instance
+
+        self.classes = None
+        self.exception = None
+
+
+    def add_samples(self, file_name_stack):
+        self.classifier.add_training_samples(file_name_stack)
+
+
     def run(self):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
-                self.description()), Main.MESSAGE_CATEGORY, Qgis.Info)
+                self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
 
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
 
-            places_training = self.obtain_places(self.training_directory)
+            places = self.obtain_places(self.directory)
 
-            self.rasterize_vector_files(places_training)
-            self.pre_process_images(places_training)
+            self.rasterize_vector_files(places)
+            self.pre_process_images(places)
 
-            # Create classifier and add samples to train
-            classifier = Classifier()
-            self.check_classes(places_training)
-            for place in places_training:
+            for place in places:
                 for image in place.images:
                     file_name_stack = "{}/{}_sr_{}_{}".format(
-                        image.path, image.base_name, "{}", STACK_SUFFIX)
-                    classifier.add_training_samples(file_name_stack)
+                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                    file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                    files = [file_merged]
+                    for feature in self.features:
+                        files.append(feature.file_format.format(file_merged[:-4]))
+                    self.stack_features(place.vector_file_path[:-4]+".tif", files, file_name_stack)
+
+            self.check_classes(places)
+            # Add samples to train
+            for place in places:
+                for image in place.images:
+                    file_name_stack = "{}/{}_sr_{}_{}".format(
+                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                    self.add_samples(file_name_stack)
+
+            self.classifier.fit(0)
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished training in {} seconds".format(str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False
-
-            self.setProgress(100)
             return True
 
         except Exception as e:
@@ -115,11 +167,11 @@ class TrainTask(Main):
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
-                'Training Directory: {td})'.format(
+                'Training Directory: {td}'.format(
                     name=self.description(),
                     time=self.elapsed_time,
-                    td=self.training_directory),
-                Main.MESSAGE_CATEGORY, Qgis.Success)
+                    td=self.directory),
+                PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
 
             self.li.notify_training(
                 self.start_time_str, self.classes, self.total_samples,
@@ -132,11 +184,96 @@ class TrainTask(Main):
                     'exception (probably the task was manually '\
                     'canceled by the user)'.format(
                         name=self.description()),
-                    Main.MESSAGE_CATEGORY, Qgis.Warning)
+                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
                     'Task "{name}" Exception: {exception}'.format(
                         name=self.description(),
                         exception=self.exception),
-                    Main.MESSAGE_CATEGORY, Qgis.Critical)
+                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Critical)
+                raise self.exception
+
+
+class TestTask(ClassificationTask):
+    def __init__(self, directory, features,
+                 classifier, lumberjack_instance):
+        super().__init__("Lumberjack testing", QgsTask.CanCancel)
+
+        self.directory = directory
+        self.features = features
+        self.classifier = classifier
+        self.li = lumberjack_instance
+
+        self.classes = None
+        self.exception = None
+
+
+    def add_samples(self, file_name_stack):
+        self.classifier.add_testing_samples(file_name_stack)
+
+
+    def run(self):
+        try:
+            QgsMessageLog.logMessage('Started task "{}"'.format(
+                self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
+
+            self.start_time_str = str(datetime.datetime.now())
+            print("=" * 30 + self.start_time_str + "=" * 30)
+            self.start_time = time.time()
+
+            places = self.obtain_places(self.directory)
+
+            self.rasterize_vector_files(places)
+            self.pre_process_images(places)
+
+            self.check_classes(places)
+            # Add samples to train
+            for place in places:
+                for image in place.images:
+                    file_name_stack = "{}/{}_sr_{}_{}".format(
+                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                    self.add_samples(file_name_stack)
+
+            self.metrics = self.classifier.calculate_metrics()
+
+            self.elapsed_time = time.time() - self.start_time
+            print("Finished training in {} seconds".format(str(self.elapsed_time)))
+
+            if self.isCanceled():
+                return False
+            return True
+
+        except Exception as e:
+            self.exception = e
+            return False
+
+
+    def finished(self, result):
+        if result:
+            QgsMessageLog.logMessage(
+                'Task "{name}" completed in {time} seconds\n' \
+                'Testing Directory: {td}'.format(
+                    name=self.description(),
+                    time=self.elapsed_time,
+                    td=self.directory),
+                PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
+
+            self.li.notify_testing(
+                self.start_time_str, self.classes, self.total_samples,
+                self.metrics, self.elapsed_time)
+
+        else:
+            if self.exception is None:
+                QgsMessageLog.logMessage(
+                    'Task "{name}" not successful but without '\
+                    'exception (probably the task was manually '\
+                    'canceled by the user)'.format(
+                        name=self.description()),
+                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(
+                    'Task "{name}" Exception: {exception}'.format(
+                        name=self.description(),
+                        exception=self.exception),
+                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception

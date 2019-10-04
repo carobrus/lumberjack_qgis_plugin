@@ -26,6 +26,20 @@
    <string>Lumberjack</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="30" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QDialogButtonBox" name="button_box">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout_training_directory">
      <property name="spacing">
@@ -58,7 +72,7 @@
      </item>
     </layout>
    </item>
-   <item row="4" column="0">
+   <item row="5" column="0">
     <widget class="Line" name="line">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -85,7 +99,7 @@
      <item>
       <widget class="QLabel" name="label_imageDirectory">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="text">
         <string>Prediction Directory</string>
@@ -97,7 +111,7 @@
        <item>
         <widget class="QLineEdit" name="lineEdit_predictionDirectoy">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="clearButtonEnabled">
           <bool>false</bool>
@@ -107,7 +121,7 @@
        <item>
         <widget class="QPushButton" name="pushButton_predictionDirectory">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>...</string>
@@ -196,7 +210,7 @@
      <item>
       <widget class="QLabel" name="label_testingDirectory">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="text">
         <string>Testing Directory</string>
@@ -208,14 +222,14 @@
        <item>
         <widget class="QLineEdit" name="lineEdit_testingDirectory">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_testingDirectory">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>...</string>
@@ -226,48 +240,10 @@
      </item>
     </layout>
    </item>
-   <item row="30" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QDialogButtonBox" name="button_box">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="12" column="0">
+   <item row="13" column="0">
     <widget class="Line" name="line_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_testing_vector">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QCheckBox" name="checkBox_testing">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>Add tesiting files (otherwise use training image 75-25)</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="13" column="0">
-    <widget class="QCheckBox" name="checkBox_prediction">
-     <property name="text">
-      <string>Predict for another image</string>
      </property>
     </widget>
    </item>
@@ -279,7 +255,7 @@
      <item>
       <widget class="QCheckBox" name="checkBox_addFile">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="text">
         <string>Open output file after running algorithm</string>
@@ -291,8 +267,48 @@
      </item>
     </layout>
    </item>
-   <item row="2" column="0">
+   <item row="9" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_testing">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Test</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QCheckBox" name="checkBox_testing">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Train with the full directory (otherwise use training 75-25)</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
@@ -315,6 +331,33 @@
      </item>
     </layout>
    </item>
+   <item row="24" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_prediction">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Predict</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <tabstops>
@@ -325,10 +368,8 @@
   <tabstop>checkBox_ndvi</tabstop>
   <tabstop>checkBox_textures</tabstop>
   <tabstop>checkBox_dem</tabstop>
-  <tabstop>checkBox_testing</tabstop>
   <tabstop>lineEdit_testingDirectory</tabstop>
   <tabstop>pushButton_testingDirectory</tabstop>
-  <tabstop>checkBox_prediction</tabstop>
   <tabstop>lineEdit_predictionDirectoy</tabstop>
   <tabstop>pushButton_predictionDirectory</tabstop>
   <tabstop>checkBox_addFile</tabstop>
@@ -338,13 +379,13 @@
  <connections>
   <connection>
    <sender>button_box</sender>
-   <signal>accepted()</signal>
+   <signal>rejected()</signal>
    <receiver>LumberjackDialogBase</receiver>
-   <slot>accept()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>30</x>
+     <y>537</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -354,13 +395,13 @@
   </connection>
   <connection>
    <sender>button_box</sender>
-   <signal>rejected()</signal>
+   <signal>accepted()</signal>
    <receiver>LumberjackDialogBase</receiver>
-   <slot>reject()</slot>
+   <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>30</x>
+     <y>537</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>

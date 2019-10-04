@@ -19,7 +19,7 @@ TEXTURES_SUFFIX = "text.tif"
 
 class Feature:
     def __init__(self):
-        self.file_out = ""
+        self.file_format = ""
 
     def execute(self, file_in):
         raise NotImplementedError("Subclasses mut override execute()")
@@ -28,48 +28,53 @@ class Feature:
 class AlgebraFeature(Feature):
     def __init__(self):
         super().__init__()
+        self.file_format = "{}_{}".format("{}", ALGEBRA_SUFFIX)
 
     def execute(self, file_in):
-        self.file_out = "{}_{}".format(file_in[:-4], ALGEBRA_SUFFIX)
-        bands_algebra.generate_algebra_file(file_in, self.file_out)
+        file_out = self.file_format.format(file_in[:-4])
+        bands_algebra.generate_algebra_file(file_in, file_out)
 
 
 class FilterFeature(Feature):
     def __init__(self):
         super().__init__()
+        self.file_format = "{}_{}".format("{}", FILTER_SUFFIX)
 
     def execute(self, file_in):
-        self.file_out = "{}_{}".format(file_in[:-4], FILTER_SUFFIX)
+        file_out = self.file_format.format(file_in[:-4])
         filters.generate_filter_file(
-            file_input=file_in, file_output_median=self.file_out)
+            file_input=file_in, file_output_median=file_out)
 
 
 class FilterGaussFeature(Feature):
     def __init__(self):
         super().__init__()
+        self.file_format = "{}_{}".format("{}", GAUSS_SUFFIX)
 
     def execute(self, file_in):
-        self.file_out = "{}_{}".format(file_in[:-4], GAUSS_SUFFIX)
+        file_out = self.file_format.format(file_in[:-4])
         filters.generate_filter_file(
-            file_input=file_in, file_output_gaussian=self.file_out)
+            file_input=file_in, file_output_gaussian=file_out)
 
 
 class NdviFeature(Feature):
     def __init__(self):
         super().__init__()
+        self.file_format = "{}_{}".format("{}", NDVI_SUFFIX)
 
     def execute(self, file_in):
-        self.file_out = "{}_{}".format(file_in[:-4], NDVI_SUFFIX)
-        ndvi.generate_ndvi_file(file_in, self.file_out)
+        file_out = self.file_format.format(file_in[:-4])
+        ndvi.generate_ndvi_file(file_in, file_out)
 
 
 class DayFeature(Feature):
     def __init__(self):
         super().__init__()
+        self.file_format = "{}_{}".format("{}", DAY_SUFFIX)
 
     def execute(self, file_in):
+        file_out = self.file_format.format(file_in[:-4])
         file_name_metadata = "{}_{}".format(file_in[:-14], IMAGE_METADATA_SUFFIX)
-        self.file_out = "{}_{}".format(file_in[:-4], DAY_SUFFIX)
         date = self.get_date_from_metadata(file_name_metadata)
         number_of_day = self.transform_day(date)
         number_of_day_normalized = number_of_day / 366
@@ -78,7 +83,7 @@ class DayFeature(Feature):
         dataset = gdal.Open(file_in, gdal.GA_ReadOnly)
         driver = gdal.GetDriverByName('GTiff')
         output_dataset = driver.Create(
-            self.file_out, dataset.RasterXSize, dataset.RasterYSize,
+            file_out, dataset.RasterXSize, dataset.RasterYSize,
             2, gdal.GDT_Int16)
         output_dataset.SetProjection(dataset.GetProjectionRef())
         output_dataset.SetGeoTransform(dataset.GetGeoTransform())
@@ -115,4 +120,4 @@ class DayFeature(Feature):
 #         super().__init__()
 #
 #     def execute(file_in):
-#         self.file_out = "{}_{}".format(file_in[:-4], PERSONALIZED_SUFFIX)
+#         file_out = "{}_{}".format(file_in[:-4], PERSONALIZED_SUFFIX)

@@ -34,7 +34,9 @@ from .resources import *
 from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
-from .traintask import TrainTask
+from .traintask import TrainTask, TestTask
+from .predicttask import PredictTask
+from .classifier import Classifier
 from .features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
 
 import sys
@@ -79,6 +81,10 @@ class Lumberjack:
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
         self.train_task = None
+        self.test_task = None
+        self.predict_task = None
+        self.classifier = None
+        self.features = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -204,27 +210,9 @@ class Lumberjack:
         filename = QFileDialog.getExistingDirectory(self.dlg, "Select training directory","")
         self.dlg.lineEdit_testingDirectory.setText(filename)
 
-    def toggle_predicting_image(self, state):
-        if state > 0:
-            self.dlg.label_imageDirectory.setEnabled(True)
-            self.dlg.lineEdit_predictionDirectoy.setEnabled(True)
-            self.dlg.pushButton_predictionDirectory.setEnabled(True)
-            self.dlg.checkBox_addFile.setEnabled(True)
-        else:
-            self.dlg.label_imageDirectory.setEnabled(False)
-            self.dlg.lineEdit_predictionDirectoy.setEnabled(False)
-            self.dlg.pushButton_predictionDirectory.setEnabled(False)
-            self.dlg.checkBox_addFile.setEnabled(False)
-
-    def toggle_testing(self, state):
-        if state > 0:
-            self.dlg.label_testingDirectory.setEnabled(True)
-            self.dlg.lineEdit_testingDirectory.setEnabled(True)
-            self.dlg.pushButton_testingDirectory.setEnabled(True)
-        else:
-            self.dlg.label_testingDirectory.setEnabled(False)
-            self.dlg.lineEdit_testingDirectory.setEnabled(False)
-            self.dlg.pushButton_testingDirectory.setEnabled(False)
+    def toggle_retrain(self):
+        self.dlg.pushButton_testing.setEnabled(False)
+        self.dlg.pushButton_prediction.setEnabled(False)
 
 
     def run(self):
@@ -238,57 +226,77 @@ class Lumberjack:
             self.dlg.lineEdit_trainingDirectory.clear()
             self.dlg.pushButton_trainingDirectory.clicked.connect(self.select_training_directory)
 
-            self.dlg.checkBox_prediction.stateChanged.connect(self.toggle_predicting_image)
-
             self.dlg.lineEdit_predictionDirectoy.clear()
             self.dlg.pushButton_predictionDirectory.clicked.connect(self.select_prediction_directory)
 
-            self.dlg.checkBox_testing.stateChanged.connect(self.toggle_testing)
+            self.dlg.checkBox_bandsAlgebra.stateChanged.connect(self.toggle_retrain)
+            self.dlg.checkBox_medianFilter.stateChanged.connect(self.toggle_retrain)
+            self.dlg.checkBox_ndvi.stateChanged.connect(self.toggle_retrain)
+            self.dlg.checkBox_textures.stateChanged.connect(self.toggle_retrain)
+            self.dlg.checkBox_dem.stateChanged.connect(self.toggle_retrain)
 
             self.dlg.lineEdit_testingDirectory.clear()
             self.dlg.pushButton_testingDirectory.clicked.connect(self.select_testing_directory)
 
-            self.dlg.finished.connect(self.result)
+            self.dlg.pushButton_training.clicked.connect(self.train)
+            self.dlg.pushButton_testing.clicked.connect(self.test)
+            # self.dlg.pushButton_testing.clicked.connect(self.predict)
 
             self.dlg.lineEdit_trainingDirectory.setText("C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Training2")
 
         self.dlg.open()
 
 
-    def result(self, result):
-        if result:
-            features = []
-            if self.dlg.checkBox_bandsAlgebra.isChecked():
-                features.append(AlgebraFeature())
-            if self.dlg.checkBox_medianFilter.isChecked():
-                features.append(FilterFeature())
-                features.append(FilterGaussFeature())
-            if self.dlg.checkBox_ndvi.isChecked():
-                features.append(NdviFeature())
-            if self.dlg.checkBox_dem.isChecked():
-                features.append(DayFeature())
-            # if self.dlg.checkBox_textures.isChecked():
-            #     features.append(TextureFeature())
+    def train(self):
+        self.dlg.hide()
+        self.features = []
+        if self.dlg.checkBox_bandsAlgebra.isChecked():
+            self.features.append(AlgebraFeature())
+        if self.dlg.checkBox_medianFilter.isChecked():
+            self.features.append(FilterFeature())
+            self.features.append(FilterGaussFeature())
+        if self.dlg.checkBox_ndvi.isChecked():
+            self.features.append(NdviFeature())
+        if self.dlg.checkBox_dem.isChecked():
+            self.features.append(DayFeature())
 
-            self.train_task = TrainTask(
-                training_directory = self.dlg.lineEdit_trainingDirectory.text(),
-                features = features,
+        self.classifier = Classifier()
 
-                do_testing = self.dlg.checkBox_testing.isChecked(),
-                testing_directory = self.dlg.lineEdit_testingDirectory.text(),
+        self.train_task = TrainTask(
+            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            features = self.features,
+            classifier = self.classifier,
+            lumberjack_instance = self)
+        QgsApplication.taskManager().addTask(self.train_task)
 
-                do_prediction = self.dlg.checkBox_prediction.isChecked(),
-                prediction_directory = self.dlg.lineEdit_predictionDirectoy.text(),
-                lumberjack_instance = self
-                )
-
-            QgsApplication.taskManager().addTask(self.train_task)
+        self.dlg.pushButton_testing.setEnabled(True)
+        self.dlg.pushButton_prediction.setEnabled(True)
 
 
-    def notify_training(self, start_time, classes_training, total_samples, time):
+    def test(self):
+        self.dlg.hide()
+        self.test_task = TestTask(
+            directory = self.dlg.lineEdit_testingDirectory.text(),
+            features = self.features,
+            classifier = self.classifier,
+            lumberjack_instance = self)
+        QgsApplication.taskManager().addTask(self.test_task)
+
+
+    def predict(self):
+        self.dlg.hide()
+        self.predict_task = PredictTask(
+            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            features = self.features,
+            classifier = self.classifier,
+            lumberjack_instance = self)
+        QgsApplication.taskManager().addTask(self.test_task)
+
+
+    def notify_training(self, start_time, classes, total_samples, time):
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText("Classes when training:")
-        for i in classes_training:
+        for i in classes:
             self.dlg.plainTextEdit.appendPlainText("- " + str(i))
         self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
         self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
@@ -297,21 +305,17 @@ class Lumberjack:
         self.dlg.open()
 
 
-    def notify_metrics(self, start_time, classes_training, classes_output, metrics, time):
+    def notify_testing(self, start_time, classes, total_samples, metrics, time):
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Classes when training:")
-        for i in classes_training:
+        self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
+        for i in classes:
             self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-        if classes_output is not None:
-            self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
-            for i in classes_output:
-                self.dlg.plainTextEdit.appendPlainText("- " + str(i))
+        self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
 
-        if metrics is not None:
-            for i in metrics[:-1]:
-                self.dlg.plainTextEdit.appendPlainText(str(i))
-            self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
-            self.dlg.plainTextEdit.appendPlainText("")
+        for i in metrics[:-1]:
+            self.dlg.plainTextEdit.appendPlainText(str(i))
+        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText("")
 
         self.dlg.open()
 
@@ -319,14 +323,14 @@ class Lumberjack:
         self.plotWindow = PlotWindow(self.dlg, feature_importances=metrics[-1])
         self.plotWindow.show()
 
-    def notify_task(self, start_time, output_files):
-        if self.dlg.checkBox_prediction.isChecked():
-            self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
-            if self.dlg.checkBox_addFile.isChecked():
-                for file_path in output_files:
-                    file_name = file_path.split("/")[-1]
-                    self.iface.addRasterLayer(file_path, file_name)
-                    layers = QgsProject.instance().mapLayersByName(file_name)
-                    abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
-                    layers[0].loadNamedStyle(abs_style_path)
-                    self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())
+
+    def notify_prediction(self, start_time, output_files):
+        self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
+        if self.dlg.checkBox_addFile.isChecked():
+            for file_path in output_files:
+                file_name = file_path.split("/")[-1]
+                self.iface.addRasterLayer(file_path, file_name)
+                layers = QgsProject.instance().mapLayersByName(file_name)
+                abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
+                layers[0].loadNamedStyle(abs_style_path)
+                self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())
