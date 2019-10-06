@@ -1,13 +1,11 @@
 from .preprocesstask import *
 from .classificationtask import *
 
-class TrainTask(ClassificationTask):
-    STACK_SUFFIX = "stack.csv"
-
+class TestTask(ClassificationTask):
     def __init__(self, directory, features,
                  classifier, testing_ratio, include_textures_image,
                  include_textures_places, lumberjack_instance):
-        super().__init__("Lumberjack training", QgsTask.CanCancel)
+        super().__init__("Lumberjack testing", QgsTask.CanCancel)
 
         self.directory = directory
         self.features = features
@@ -22,7 +20,7 @@ class TrainTask(ClassificationTask):
 
 
     def add_samples(self, file_name_stack):
-        self.classifier.add_training_samples(file_name_stack)
+        self.classifier.add_testing_samples(file_name_stack)
 
 
     def run(self):
@@ -33,38 +31,37 @@ class TrainTask(ClassificationTask):
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
 
-            places = self.obtain_places(self.directory)
-
-            self.rasterize_vector_files(places)
-            self.pre_process_images(places)
-
-            for place in places:
-                for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}_{}".format(
-                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
-                    file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
-                    files = [file_merged]
-                    for feature in self.features:
-                        files.append(feature.file_format.format(file_merged[:-4]))
-                    # add textures
-                    if self.include_textures_image:
-                        files.append(image.extra_features)
-                    if self.include_textures_places:
-                        files.append(place.dem_textures_file_path)
-                    self.stack_features(place.vector_file_path[:-4]+".tif", files, file_name_stack)
-
-            self.check_classes(places)
-            # Add samples to train
-            for place in places:
-                for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}_{}".format(
-                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
-                    self.add_samples(file_name_stack)
-
             if self.without_ratio:
-                self.classifier.fit(0.0)
+                places = self.obtain_places(self.directory)
+
+                self.rasterize_vector_files(places)
+                self.pre_process_images(places)
+
+                for place in places:
+                    for image in place.images:
+                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                            image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                        file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                        files = [file_merged]
+                        for feature in self.features:
+                            files.append(feature.file_format.format(file_merged[:-4]))
+                        # add textures
+                        if self.include_textures_image:
+                            files.append(image.extra_features)
+                        if self.include_textures_places:
+                            files.append(place.dem_textures_file_path)
+                        self.stack_features(place.vector_file_path[:-4]+".tif", files, file_name_stack)
+
+                self.check_classes(places)
+                # Add samples to train
+                for place in places:
+                    for image in place.images:
+                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                            image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                        self.add_samples(file_name_stack)
             else:
-                self.classifier.fit(0.25)
+                self.total_samples = self.classifier.get_test_size()
+            self.metrics = self.classifier.calculate_metrics()
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished training in {} seconds".format(str(self.elapsed_time)))
@@ -82,15 +79,15 @@ class TrainTask(ClassificationTask):
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
-                'Training Directory: {td}'.format(
+                'Testing Directory: {td}'.format(
                     name=self.description(),
                     time=self.elapsed_time,
                     td=self.directory),
                 PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
 
-            self.li.notify_training(
+            self.li.notify_testing(
                 self.start_time_str, self.classes, self.total_samples,
-                self.elapsed_time)
+                self.metrics, self.elapsed_time)
 
         else:
             if self.exception is None:
