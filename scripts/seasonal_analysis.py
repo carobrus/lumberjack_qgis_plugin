@@ -2,7 +2,7 @@ from osgeo import gdal
 import numpy as np
 import time
 import datetime
-from .preprocesstask import *
+from .preprocess_task import *
 
 class CalculateFeaturesTask(PreProcessTask):
     def __init__(self, directory, features, include_textures_image,

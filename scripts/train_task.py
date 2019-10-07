@@ -1,5 +1,5 @@
-from .preprocesstask import *
-from .classificationtask import *
+from .preprocess_task import *
+from .classification_task import *
 
 class TrainTask(ClassificationTask):
     STACK_SUFFIX = "stack.csv"

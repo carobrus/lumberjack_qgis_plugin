@@ -1,4 +1,4 @@
-from .preprocesstask import *
+from .preprocess_task import *
 
 class ClassificationTask(PreProcessTask):
     def __init__(self, description, task):

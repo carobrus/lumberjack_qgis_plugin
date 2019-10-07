@@ -1,4 +1,4 @@
-from .preprocesstask import *
+from .preprocess_task import *
 
 class PredictTask(PreProcessTask):
     PREDICTION_SUFFIX = "predic.tif"

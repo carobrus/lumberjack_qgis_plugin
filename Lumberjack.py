@@ -35,17 +35,17 @@ from .resources import *
 from .Lumberjack_dialog import LumberjackDialog
 import os.path
 
-from .traintask import TrainTask
-from .testtask import TestTask
-from .predicttask import PredictTask
+from .scripts.train_task import TrainTask
+from .scripts.test_task import TestTask
+from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
-from .features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
-from .seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
+from .scripts.features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
+from .scripts.seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
 
 import sys
 
-from .plot import PlotWindow
-from .plotbox import PlotWindow as PlotboxWindow
+from .scripts.plot import PlotWindow
+from .scripts.plotbox import PlotWindow as PlotboxWindow
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
@@ -361,14 +361,14 @@ class Lumberjack:
     def predict(self):
         self.dlg.hide()
         self.calculate_features_task = CalculateFeaturesTask(
-            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            directory = self.dlg.lineEdit_predictionDirectoy.text(),
             features = self.features,
             include_textures_image = self.include_textures_image,
             include_textures_places = self.include_textures_places,
             lumberjack_instance = self)
 
         self.predict_task = PredictTask(
-            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            directory = self.dlg.lineEdit_predictionDirectoy.text(),
             classifier = self.classifier,
             lumberjack_instance = self)
 
