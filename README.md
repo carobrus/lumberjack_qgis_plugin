@@ -1,4 +1,4 @@
-# Lumberjack
+# Lumberjack <img align="right" width="45" height="45" src="icon.png" alt="Lumberjack icon">
 
 A qgis plugin to calculate features of images, classify and remove trees out of elevation maps
 
@@ -30,8 +30,7 @@ pip install *name-of-library*
 ## Installation
 
 You can download the repository and add it along with the other python plugins. By default this is located in:
-`C:\OSGeo4W64\apps\qgis\python\plugins`
-
+`C:\OSGeo4W64\apps\qgis\python\plugins` <br/>&nbsp;&nbsp;&nbsp;&nbsp;
 If you are not sure about the location, you can:
 * Download the repository as a .zip.
 * In QGIS go to *Plugins > Manage and Install Plugins > Install from ZIP* and browse the .zip file.
@@ -39,11 +38,59 @@ If you are not sure about the location, you can:
 
 After this, you should be able to see the plugin among the installed ones.
 
-Do not forget to activate the plugin selecting the checkbox at *Plugins > Manage and Install Plugins > All*. You should be able to see the plugin at the plugins menu ( <kbd>alt</kbd> + <kbd>p</kbd> ).
+> Do not forget to activate the plugin selecting the checkbox at *Plugins > Manage and Install Plugins > All*. You should be able to see the plugin at the plugins menu ( <kbd>alt</kbd> + <kbd>p</kbd> ).
 
 
 ## How to Use
 ...
+
+Directories have to keep certain a format. Each directory hold folders with places. Each place should have a .tiff file defining the extension to process and the Landsat 8 images as downloaded from USGS. Also, each place might have features to apply to that place (e.g. textures of the DEM).<br/>&nbsp;&nbsp;&nbsp;&nbsp;
+If additional features are intended to be consider for an image, each image folder has to contain a file with the same suffix.<br/>&nbsp;&nbsp;&nbsp;&nbsp;
+An example directory:
+
+```
+C:\USERS\USER\DOCUMENTS\TRAINING
+├───GralVillegas
+│   │   demGralVillegasRescale-textures.tif
+│   │   GralVillegas-ext.tif
+│   │   ...
+│   │   GralVillegas_roi.shp
+│   │   GralVillegas_roi.shx
+│   │
+│   ├───LC082280842017113001T1-SC20190815123416
+│   │       LC08_L1TP_228084_20171130_20171207_01_T1.xml
+│   │       LC08_L1TP_228084_20171130_20171207_01_T1_ANG.txt
+│   │       LC08_L1TP_228084_20171130_20171207_01_T1_MTL.txt
+│   │       ...
+│   │       LC08_L1TP_228084_20171130_20171207_01_T1_sr_band7.tif
+│   │       LC08_L1TP_228084_20171130_20171207_01_T1_text.tif
+│   │
+│   └───LC082280842019071501T1-SC20190815133929
+│           LC08_L1TP_228084_20190715_20190721_01_T1.xml
+│           LC08_L1TP_228084_20190715_20190721_01_T1_ANG.txt
+│           LC08_L1TP_228084_20190715_20190721_01_T1_MTL.txt
+│           ...
+│           LC08_L1TP_228084_20190715_20190721_01_T1_sr_band7.tif
+│           LC08_L1TP_228084_20190715_20190721_01_T1_text.tif
+│
+└───LasFlores
+    │   demLasFloresRescale-textures.tif
+    │   LasFlores-ext.tif
+    │   ...
+    │   LasFlores_roi.shp
+    │   LasFlores_roi.shx
+    │
+    └───LC082250852017082101T1-SC20190815115812
+            LC08_L1TP_225085_20170821_20170911_01_T1.xml
+            LC08_L1TP_225085_20170821_20170911_01_T1_ANG.txt
+            LC08_L1TP_225085_20170821_20170911_01_T1_MTL.txt
+            ...
+            LC08_L1TP_225085_20170821_20170911_01_T1_sr_band7.tif
+            LC08_L1TP_225085_20170821_20170911_01_T1_text.tif
+```
+
+<!-- # Lumberjack ![alt text](https://github.com/carobrus/qgis_python_plugin/blob/master/icon.jpg) -->
+
 <!--
 ## Running
 
