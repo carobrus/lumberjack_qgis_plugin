@@ -5,17 +5,13 @@ class PredictTask(PreProcessTask):
     STACK_SUFFIX = "stack.tif"
 
 
-    def __init__(self, directory, features, classifier, include_textures_image,
-                 include_textures_places, lumberjack_instance):
+    def __init__(self, directory, classifier, lumberjack_instance):
         super().__init__("Lumberjack prediction", QgsTask.CanCancel)
         self.directory = directory
-        self.features = features
         self.classifier = classifier
-        self.include_textures_image = include_textures_image
-        self.include_textures_places = include_textures_places
         self.li = lumberjack_instance
-
         self.output_files = []
+
 
     def run(self):
         try:
@@ -27,23 +23,6 @@ class PredictTask(PreProcessTask):
             self.start_time = time.time()
 
             places = self.obtain_places(self.directory)
-            self.pre_process_images(places)
-
-            for place in places:
-                for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}".format(
-                        image.path, image.base_name, PredictTask.STACK_SUFFIX)
-                    file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
-                    files = [file_merged]
-                    for feature in self.features:
-                        files.append(feature.file_format.format(file_merged[:-4]))
-                    # add textures
-                    if self.include_textures_image:
-                        files.append(image.extra_features)
-                    if self.include_textures_places:
-                        files.append(place.dem_textures_file_path)
-                    total_features = self.calculate_total_features(files)
-                    self.merge_images(files, file_name_stack, total_features, gdal.GDT_Float32)
 
             self.output_files = []
             for place in places:

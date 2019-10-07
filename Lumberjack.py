@@ -263,9 +263,6 @@ class Lumberjack:
             self.dlg.pushButton_calculate_features.clicked.connect(self.calculate_features)
             self.dlg.pushButton_boxplot.clicked.connect(self.plot_seasonal_analysis)
 
-            # self.dlg.lineEdit_trainingDirectory.setText(
-            #     "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Training2")
-
         self.dlg.open()
 
 
@@ -305,13 +302,13 @@ class Lumberjack:
         self.dlg.spinBox_feature.setRange(1, range)
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
-        self.dlg.open()
+        # self.dlg.open()
 
 
     def notify_seasonal_analysis(self, start_time, data, days, time):
         self.dlg.open()
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
         self.plotboxWindow = PlotboxWindow(self.dlg, data=data, days=days)
         self.plotboxWindow.show()
 
@@ -363,13 +360,19 @@ class Lumberjack:
 
     def predict(self):
         self.dlg.hide()
-        self.predict_task = PredictTask(
+        self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
             features = self.features,
-            classifier = self.classifier,
             include_textures_image = self.include_textures_image,
             include_textures_places = self.include_textures_places,
             lumberjack_instance = self)
+
+        self.predict_task = PredictTask(
+            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            classifier = self.classifier,
+            lumberjack_instance = self)
+
+        self.predict_task.addSubTask(self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
         QgsApplication.taskManager().addTask(self.predict_task)
 
 
@@ -407,7 +410,7 @@ class Lumberjack:
 
     def notify_prediction(self, start_time, output_files, time):
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished prediction in {} seconds".format(str(time)))
         self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
         if self.dlg.checkBox_addFile.isChecked():
             for file_path in output_files:
