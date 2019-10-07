@@ -9,7 +9,7 @@ from osgeo import ogr
 import numpy as np
 from .image import Image
 from .place import Place
-from .classifier import Classifier
+from .scripts.classifier import Classifier
 from . import bands_algebra
 from . import filters
 from . import ndvi

@@ -38,7 +38,7 @@ import os.path
 from .traintask import TrainTask
 from .testtask import TestTask
 from .predicttask import PredictTask
-from .classifier import Classifier
+from .scripts.classifier import Classifier
 from .features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
 from .seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
 
