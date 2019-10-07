@@ -6,13 +6,14 @@ import numpy as np
 
 class PlotWindow(QMainWindow):
 
-    def __init__(self, parent=None, data=None):
+    def __init__(self, parent=None, data=None, days=None):
         super(PlotWindow, self).__init__(parent)
 
         self.title = 'Thresholds'
         self.width = 700
         self.height = 480
         self.data = data
+        self.days = days
         self.initUI()
 
     def initUI(self):
@@ -20,7 +21,7 @@ class PlotWindow(QMainWindow):
         # self.resize(self.width, self.height)
         self.setFixedSize(self.width, self.height)
 
-        m = PlotCanvas(self, data=self.data)
+        m = PlotCanvas(self, data=self.data, days=self.days)
         m.move(0,0)
 
         self.show()
@@ -28,11 +29,12 @@ class PlotWindow(QMainWindow):
 
 class PlotCanvas(FigureCanvas):
 
-    def __init__(self, parent=None, dpi=100, data=None):
+    def __init__(self, parent=None, dpi=100, data=None, days=None):
         fig = Figure(dpi=dpi)
         fig.tight_layout()
         self.axes = fig.add_subplot(111)
         self.data = data
+        self.days = days
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
 
@@ -42,8 +44,8 @@ class PlotCanvas(FigureCanvas):
 
     def plot(self):
         data = self.data
-        y = list(range(1, len(data)+1))
         ax = self.figure.add_subplot(111)
-        ax.boxplot(data, showfliers=False)
+        ax.set_xticklabels(self.days, rotation=90)
+        ax.boxplot(data, showfliers=False, positions=self.days, widths=3)
         # ax.set_title('Threshholds')
         self.draw()

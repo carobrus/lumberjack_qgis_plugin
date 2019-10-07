@@ -40,6 +40,7 @@ from .testtask import TestTask
 from .predicttask import PredictTask
 from .classifier import Classifier
 from .features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
+from .seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
 
 import sys
 
@@ -90,6 +91,7 @@ class Lumberjack:
         self.testing_ratio = None
         self.include_textures_image = None
         self.include_textures_places = None
+        self.calculate_features_task = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -218,6 +220,14 @@ class Lumberjack:
             self.dlg, "Select training directory","")
         self.dlg.lineEdit_testingDirectory.setText(filename)
 
+    def select_seasonal_directory(self):
+        filename = QFileDialog.getExistingDirectory(
+            self.dlg, "Select directory","")
+        self.dlg.lineEdit_directory_seasonal.setText(filename)
+
+    def select_mask(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select mask","","*.tif; *.tiff")
+        self.dlg.lineEdit_mask_file.setText(filename[0])
 
     def run(self):
         """Run method that performs all the real work"""
@@ -244,10 +254,66 @@ class Lumberjack:
             self.dlg.pushButton_testing.clicked.connect(self.test)
             self.dlg.pushButton_prediction.clicked.connect(self.predict)
 
+            self.dlg.pushButton_seasonal.clicked.connect(
+                self.select_seasonal_directory)
+
+            self.dlg.pushButton_mask.clicked.connect(
+                self.select_mask)
+
+            self.dlg.pushButton_calculate_features.clicked.connect(self.calculate_features)
+            self.dlg.pushButton_boxplot.clicked.connect(self.plot_seasonal_analysis)
+
             # self.dlg.lineEdit_trainingDirectory.setText(
             #     "C:/Users/Carolina/Documents/Tesis/Tiff Files/HighLevel/Training2")
 
         self.dlg.open()
+
+
+    def calculate_features(self):
+        self.dlg.hide()
+        self.features = []
+        if self.dlg.checkBox_bandsAlgebra.isChecked():
+            self.features.append(AlgebraFeature())
+        if self.dlg.checkBox_medianFilter.isChecked():
+            self.features.append(FilterFeature())
+            self.features.append(FilterGaussFeature())
+        if self.dlg.checkBox_ndvi.isChecked():
+            self.features.append(NdviFeature())
+        if self.dlg.checkBox_dem.isChecked():
+            self.features.append(DayFeature())
+
+        self.calculate_features_task = CalculateFeaturesTask(
+            directory = self.dlg.lineEdit_directory_seasonal.text(),
+            features = self.features,
+            include_textures_image = self.dlg.checkBox_textures.isChecked(),
+            include_textures_places = self.dlg.checkBox_dem.isChecked(),
+            lumberjack_instance = self)
+        QgsApplication.taskManager().addTask(self.calculate_features_task)
+
+
+    def plot_seasonal_analysis(self):
+        self.dlg.hide()
+        self.seasonal_analysis = SeasonalAnalysis(
+            directory = self.dlg.lineEdit_directory_seasonal.text(),
+            mask_layer_file = self.dlg.lineEdit_mask_file.text(),
+            feature = self.dlg.spinBox_feature.value(),
+            lumberjack_instance = self)
+        QgsApplication.taskManager().addTask(self.seasonal_analysis)
+
+
+    def notify_calculate_features(self, start_time, range, time):
+        self.dlg.spinBox_feature.setRange(1, range)
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
+        self.dlg.open()
+
+
+    def notify_seasonal_analysis(self, start_time, data, days, time):
+        self.dlg.open()
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
+        self.plotboxWindow = PlotboxWindow(self.dlg, data=data, days=days)
+        self.plotboxWindow.show()
 
 
     def train(self):

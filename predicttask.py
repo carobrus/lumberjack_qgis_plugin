@@ -43,7 +43,7 @@ class PredictTask(PreProcessTask):
                     if self.include_textures_places:
                         files.append(place.dem_textures_file_path)
                     total_features = self.calculate_total_features(files)
-                    self.merge_images(files, file_name_stack, total_features)
+                    self.merge_images(files, file_name_stack, total_features, gdal.GDT_Float32)
 
             self.output_files = []
             for place in places:

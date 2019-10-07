@@ -13,7 +13,6 @@ from .classifier import Classifier
 from . import bands_algebra
 from . import filters
 from . import ndvi
-from . import threshold
 
 
 IMAGE_METADATA_SUFFIX = "MTL.txt"
@@ -79,7 +78,7 @@ class PreProcessTask(QgsTask):
                 shell=True)
 
 
-    def merge_images(self, files, file_name_merged, bands_amount):
+    def merge_images(self, files, file_name_merged, bands_amount, data_type):
         bands_acum = 0
         output_dataset = None
         print("File Name Merged: " + file_name_merged)
@@ -88,7 +87,7 @@ class PreProcessTask(QgsTask):
         driver = gdal.GetDriverByName('GTiff')
         output_dataset = driver.Create(
             file_name_merged, dataset.RasterXSize, dataset.RasterYSize,
-            bands_amount, gdal.GDT_Int16)
+            bands_amount, data_type)
         output_dataset.SetGeoTransform(dataset.GetGeoTransform())
         output_dataset.SetProjection(dataset.GetProjection())
         dataset = None
@@ -131,7 +130,7 @@ class PreProcessTask(QgsTask):
                 files_to_merge = []
                 for i in range(1, BAND_TOTAL+1):
                     files_to_merge.append(file_name_crop.format(i))
-                self.merge_images(files_to_merge, file_name_merged, BAND_TOTAL)
+                self.merge_images(files_to_merge, file_name_merged, BAND_TOTAL, gdal.GDT_Int16)
                 for file in files_to_merge:
                     if os.path.exists(file):
                         os.remove(file)

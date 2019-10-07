@@ -83,7 +83,7 @@ class DayFeature(Feature):
         driver = gdal.GetDriverByName('GTiff')
         output_dataset = driver.Create(
             file_out, dataset.RasterXSize, dataset.RasterYSize,
-            2, gdal.GDT_Int16)
+            2, gdal.GDT_Float32)
         output_dataset.SetProjection(dataset.GetProjectionRef())
         output_dataset.SetGeoTransform(dataset.GetGeoTransform())
         band = np.full(
