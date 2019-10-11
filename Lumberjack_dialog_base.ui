@@ -44,7 +44,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_detection">
       <property name="autoFillBackground">
@@ -480,115 +480,142 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_dem">
-         <property name="spacing">
-          <number>0</number>
+        <widget class="QGroupBox" name="groupBox_dem">
+         <property name="title">
+          <string>DEM</string>
          </property>
-         <item>
-          <widget class="QLabel" name="label_dem">
-           <property name="text">
-            <string>DEM</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_dem">
-           <item>
-            <widget class="QLineEdit" name="lineEdit_dem"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_search_dem">
-             <property name="text">
-              <string>...</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_dem">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_dem">
+              <property name="text">
+               <string>DEM File Input</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_dem">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_dem"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_search_dem">
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_tree_mask">
-         <property name="spacing">
-          <number>0</number>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>Mask</string>
          </property>
-         <item>
-          <widget class="QLabel" name="label_tree_mask">
-           <property name="text">
-            <string>Tree Mask</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_tree_mask">
-           <item>
-            <widget class="QLineEdit" name="lineEdit_tree_mask"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_search_tree_mask">
-             <property name="text">
-              <string>...</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_tree_mask">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_tree_mask">
+              <property name="text">
+               <string>Tree Mask File</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_tree_mask">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_tree_mask"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_search_tree_mask">
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_dilation">
+            <item>
+             <widget class="QLabel" name="label_dilation">
+              <property name="text">
+               <string>Dilate Mask (pixels unit)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBox_dilation"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_dilation">
-         <item>
-          <widget class="QLabel" name="label_dilation">
-           <property name="text">
-            <string>Dilate Mask (pixels unit)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_dilation"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_output_dem">
-         <property name="spacing">
-          <number>0</number>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Output</string>
          </property>
-         <item>
-          <widget class="QLabel" name="label_output_dem">
-           <property name="text">
-            <string>Output DEM</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_output_dem">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <item>
-            <widget class="QLineEdit" name="lineEdit_output_dem"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_output_dem">
-             <property name="text">
-              <string>...</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBox_add_dem">
-           <property name="text">
-            <string>Open outfile when finished</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_output_dem">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_output_dem">
+              <property name="text">
+               <string>Output DEM File</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_output_dem">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_output_dem"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_output_dem">
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox_add_dem">
+              <property name="text">
+               <string>Open outfile when finished</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_correct_trees">
