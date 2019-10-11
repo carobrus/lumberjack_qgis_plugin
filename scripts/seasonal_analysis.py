@@ -3,6 +3,7 @@ import numpy as np
 import time
 import datetime
 from .preprocess_task import *
+from .. import Lumberjack
 
 class CalculateFeaturesTask(PreProcessTask):
     def __init__(self, directory, features, include_textures_image,
@@ -18,7 +19,7 @@ class CalculateFeaturesTask(PreProcessTask):
     def run(self):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
-                self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
+                self.description()), Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
@@ -58,7 +59,7 @@ class CalculateFeaturesTask(PreProcessTask):
         QgsMessageLog.logMessage(
             'Task "{name}" was canceled'.format(
                 name=self.description()),
-            Main.MESSAGE_CATEGORY, Qgis.Info)
+            Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
 
 
@@ -70,7 +71,7 @@ class CalculateFeaturesTask(PreProcessTask):
                     name=self.description(),
                     time=self.elapsed_time,
                     td=self.directory),
-                PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
+                Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
             self.lumberjack_instance.notify_calculate_features(
                 self.start_time_str, self.total_features, self.elapsed_time)
         else:
@@ -80,13 +81,13 @@ class CalculateFeaturesTask(PreProcessTask):
                     'exception (probably the task was manually '\
                     'canceled by the user)'.format(
                         name=self.description()),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Warning)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
                     'Task "{name}" Exception: {exception}'.format(
                         name=self.description(),
                         exception=self.exception),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Critical)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception
 
 
@@ -154,7 +155,7 @@ class SeasonalAnalysis(PreProcessTask):
     def run(self):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
-                self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
+                self.description()), Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
@@ -178,7 +179,7 @@ class SeasonalAnalysis(PreProcessTask):
         QgsMessageLog.logMessage(
             'Task "{name}" was canceled'.format(
                 name=self.description()),
-            Main.MESSAGE_CATEGORY, Qgis.Info)
+            Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
 
 
@@ -190,7 +191,7 @@ class SeasonalAnalysis(PreProcessTask):
                     name=self.description(),
                     time=self.elapsed_time,
                     td=self.directory),
-                PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
+                Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
             self.lumberjack_instance.notify_seasonal_analysis(
                 self.start_time_str, self.data, self.days, self.elapsed_time)
         else:
@@ -200,11 +201,11 @@ class SeasonalAnalysis(PreProcessTask):
                     'exception (probably the task was manually '\
                     'canceled by the user)'.format(
                         name=self.description()),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Warning)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
                     'Task "{name}" Exception: {exception}'.format(
                         name=self.description(),
                         exception=self.exception),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Critical)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception

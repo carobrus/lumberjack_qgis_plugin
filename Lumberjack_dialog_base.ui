@@ -44,7 +44,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_detection">
       <property name="autoFillBackground">
@@ -61,7 +61,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_training_directory">
+           <layout class="QVBoxLayout" name="verticalLayout_training_dir">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -73,7 +73,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <layout class="QHBoxLayout" name="horizontalLayout_training_dir">
               <item>
                <widget class="QLineEdit" name="lineEdit_trainingDirectory">
                 <property name="text">
@@ -163,7 +163,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <layout class="QHBoxLayout" name="horizontalLayout_train_ratio">
             <item>
              <widget class="QCheckBox" name="checkBox_testing_ratio">
               <property name="enabled">
@@ -178,7 +178,7 @@
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer">
+             <spacer name="horizontalSpacer_train">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -209,7 +209,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_img_testing">
+           <layout class="QVBoxLayout" name="verticalLayout_testing_dir">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -224,7 +224,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <layout class="QHBoxLayout" name="horizontalLayout_testing_dir">
               <item>
                <widget class="QLineEdit" name="lineEdit_testingDirectory">
                 <property name="enabled">
@@ -247,9 +247,9 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QHBoxLayout" name="horizontalLayout_test">
             <item>
-             <spacer name="horizontalSpacer_2">
+             <spacer name="horizontalSpacer_test">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -283,7 +283,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_img_predict">
+           <layout class="QVBoxLayout" name="verticalLayout_predict_dir">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -298,7 +298,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout">
+             <layout class="QHBoxLayout" name="horizontalLayout_predict_dir">
               <item>
                <widget class="QLineEdit" name="lineEdit_predictionDirectoy">
                 <property name="enabled">
@@ -324,7 +324,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <layout class="QHBoxLayout" name="horizontalLayout_open_file">
             <item>
              <widget class="QCheckBox" name="checkBox_addFile">
               <property name="enabled">
@@ -339,7 +339,7 @@
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_3">
+             <spacer name="horizontalSpacer_predict">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -377,13 +377,13 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
-        <widget class="QGroupBox" name="groupBox">
+        <widget class="QGroupBox" name="groupBox_preprocess">
          <property name="title">
           <string>Pre-Process</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_9">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
+           <layout class="QVBoxLayout" name="verticalLayout_preprocess_dir">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -395,7 +395,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <layout class="QHBoxLayout" name="horizontalLayout_preprocess_dir">
               <item>
                <widget class="QLineEdit" name="lineEdit_directory_seasonal"/>
               </item>
@@ -437,13 +437,13 @@
         </spacer>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_2">
+        <widget class="QGroupBox" name="groupBox_plot">
          <property name="title">
           <string>Plot</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_10">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_8">
+           <layout class="QVBoxLayout" name="verticalLayout_mask_file">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -455,7 +455,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <layout class="QHBoxLayout" name="horizontalLayout_mask_file">
               <item>
                <widget class="QLineEdit" name="lineEdit_mask_file"/>
               </item>
@@ -471,7 +471,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <layout class="QHBoxLayout" name="horizontalLayout_feature_number">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -522,6 +522,139 @@
       <attribute name="title">
        <string>Tree Correction</string>
       </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_11">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_dem">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_dem">
+           <property name="text">
+            <string>DEM</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_dem">
+           <item>
+            <widget class="QLineEdit" name="lineEdit_dem"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_search_dem">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_tree_mask">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_tree_mask">
+           <property name="text">
+            <string>Tree Mask</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_tree_mask">
+           <item>
+            <widget class="QLineEdit" name="lineEdit_tree_mask"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_search_tree_mask">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_dilation">
+         <item>
+          <widget class="QLabel" name="label_dilation">
+           <property name="text">
+            <string>Dilate Mask (pixels unit)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_dilation"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_output_dem">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_output_dem">
+           <property name="text">
+            <string>Output DEM</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_output_dem">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_output_dem"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_output_dem">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_add_dem">
+           <property name="text">
+            <string>Open outfile when finished</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_correct_trees">
+         <property name="text">
+          <string>Correct</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

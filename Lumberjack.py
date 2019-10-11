@@ -41,11 +41,14 @@ from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
 from .scripts.features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
 from .scripts.seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
+from .scripts.tree_correction import TreeCorrectionTask
 
 import sys
 
 from .scripts.plot import PlotWindow
 from .scripts.plotbox import PlotWindow as PlotboxWindow
+
+MESSAGE_CATEGORY = 'Lumberjack'
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
@@ -92,6 +95,7 @@ class Lumberjack:
         self.include_textures_image = None
         self.include_textures_places = None
         self.calculate_features_task = None
+        self.tree_correction_task = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -229,6 +233,18 @@ class Lumberjack:
         filename = QFileDialog.getOpenFileName(self.dlg, "Select mask","","*.tif; *.tiff")
         self.dlg.lineEdit_mask_file.setText(filename[0])
 
+    def search_dem(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select dem","","*.tif; *.tiff")
+        self.dlg.lineEdit_dem.setText(filename[0])
+
+    def search_tree_mask(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select tree mask","","*.tif; *.tiff")
+        self.dlg.lineEdit_tree_mask.setText(filename[0])
+
+    def search_output_dem(self):
+        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","","*.tif; *.tiff")
+        self.dlg.lineEdit_output_dem.setText(filename[0])
+
     def run(self):
         """Run method that performs all the real work"""
         # Create the dialog with elements (after translation) and keep reference
@@ -257,13 +273,43 @@ class Lumberjack:
             self.dlg.pushButton_seasonal.clicked.connect(
                 self.select_seasonal_directory)
 
-            self.dlg.pushButton_mask.clicked.connect(
-                self.select_mask)
+            self.dlg.pushButton_mask.clicked.connect(self.select_mask)
 
-            self.dlg.pushButton_calculate_features.clicked.connect(self.calculate_features)
-            self.dlg.pushButton_boxplot.clicked.connect(self.plot_seasonal_analysis)
+            self.dlg.pushButton_calculate_features.clicked.connect(
+                self.calculate_features)
+            self.dlg.pushButton_boxplot.clicked.connect(
+                self.plot_seasonal_analysis)
+
+            self.dlg.pushButton_search_dem.clicked.connect(self.search_dem)
+            self.dlg.pushButton_search_tree_mask.clicked.connect(self.search_tree_mask)
+            self.dlg.pushButton_output_dem.clicked.connect(self.search_output_dem)
+
+            self.dlg.pushButton_correct_trees.clicked.connect(self.correct_trees)
+
+            self.dlg.tabWidget.setCurrentIndex(0)
 
         self.dlg.open()
+
+
+    def correct_trees(self):
+        self.tree_correction_task = TreeCorrectionTask(
+            dem_file = self.dlg.lineEdit_dem.text(),
+            tree_mask_file = self.dlg.lineEdit_tree_mask.text(),
+            output_file = self.dlg.lineEdit_output_dem.text(),
+            dilate_amount = self.dlg.spinBox_dilation.value(),
+            lumberjack_instance = self
+        )
+        QgsApplication.taskManager().addTask(self.tree_correction_task)
+
+
+    def notify_tree_correction(self, start_time, output_file, time):
+        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText("Finished tree correction in {} seconds".format(str(time)))
+        if self.dlg.checkBox_add_dem.isChecked():
+            file_name = output_file.split("/")[-1]
+            self.iface.addRasterLayer(output_file, file_name)
+            layers = QgsProject.instance().mapLayersByName(file_name)
+        self.iface.messageBar().pushMessage("Success", "Output file {} created".format(file_name), level=Qgis.Success, duration=5)
 
 
     def calculate_features(self):

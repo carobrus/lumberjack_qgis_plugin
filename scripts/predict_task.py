@@ -16,7 +16,7 @@ class PredictTask(PreProcessTask):
     def run(self):
         try:
             QgsMessageLog.logMessage('Started task "{}"'.format(
-                self.description()), PreProcessTask.MESSAGE_CATEGORY, Qgis.Info)
+                self.description()), Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
 
             self.start_time_str = str(datetime.datetime.now())
             print("=" * 30 + self.start_time_str + "=" * 30)
@@ -56,7 +56,7 @@ class PredictTask(PreProcessTask):
                     name=self.description(),
                     time=self.elapsed_time,
                     td=self.directory),
-                PreProcessTask.MESSAGE_CATEGORY, Qgis.Success)
+                Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
 
             self.li.notify_prediction(
                 self.start_time_str, self.output_files, self.elapsed_time)
@@ -68,11 +68,11 @@ class PredictTask(PreProcessTask):
                     'exception (probably the task was manually '\
                     'canceled by the user)'.format(
                         name=self.description()),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Warning)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
                     'Task "{name}" Exception: {exception}'.format(
                         name=self.description(),
                         exception=self.exception),
-                    PreProcessTask.MESSAGE_CATEGORY, Qgis.Critical)
+                    Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception

@@ -3,16 +3,13 @@ import os
 import subprocess
 import time
 import datetime
-import math
 from osgeo import gdal
 from osgeo import ogr
 import numpy as np
 from .image import Image
 from .place import Place
 from .classifier import Classifier
-from . import bands_algebra
-from . import filters
-from . import ndvi
+from .. import Lumberjack
 
 
 IMAGE_METADATA_SUFFIX = "MTL.txt"
@@ -26,7 +23,6 @@ BAND_TOTAL = 7
 
 
 class PreProcessTask(QgsTask):
-    MESSAGE_CATEGORY = 'Lumberjack'
 
     def obtain_places(self, root_directory):
         places = []
@@ -169,5 +165,5 @@ class PreProcessTask(QgsTask):
         QgsMessageLog.logMessage(
             'Task "{name}" was canceled'.format(
                 name=self.description()),
-            Main.MESSAGE_CATEGORY, Qgis.Info)
+            Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
