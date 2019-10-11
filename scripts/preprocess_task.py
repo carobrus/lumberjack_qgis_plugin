@@ -19,6 +19,7 @@ TEXTURES_SUFFIX = "text.tif"
 CROP_SUFFIX = "crop.tif"
 MERGED_SUFFIX = "merged.tif"
 SHAPEFILE_SUFFIX = "roi.shp"
+MASK_SUFFIX = "mask.tif"
 BAND_TOTAL = 7
 
 
@@ -49,6 +50,8 @@ class PreProcessTask(QgsTask):
                             place.dem_textures_file_path = file_path
                         elif (file_path[-(len(SHAPEFILE_SUFFIX)):] == SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
+                        elif (file_path[-(len(MASK_SUFFIX)):] == MASK_SUFFIX):
+                            place.mask = file_path
                 places.append(place)
         return places
 

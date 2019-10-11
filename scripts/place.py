@@ -5,4 +5,5 @@ class Place:
         self.extension_file_path = ""
         self.vector_file_path = ""
         self.dem_textures_file_path = ""
+        self.mask = ""
         self.images = []

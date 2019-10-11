@@ -229,10 +229,6 @@ class Lumberjack:
             self.dlg, "Select directory","")
         self.dlg.lineEdit_directory_seasonal.setText(filename)
 
-    def select_mask(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select mask","","*.tif; *.tiff")
-        self.dlg.lineEdit_mask_file.setText(filename[0])
-
     def search_dem(self):
         filename = QFileDialog.getOpenFileName(self.dlg, "Select dem","","*.tif; *.tiff")
         self.dlg.lineEdit_dem.setText(filename[0])
@@ -272,8 +268,6 @@ class Lumberjack:
 
             self.dlg.pushButton_seasonal.clicked.connect(
                 self.select_seasonal_directory)
-
-            self.dlg.pushButton_mask.clicked.connect(self.select_mask)
 
             self.dlg.pushButton_calculate_features.clicked.connect(
                 self.calculate_features)
@@ -338,7 +332,6 @@ class Lumberjack:
         self.dlg.hide()
         self.seasonal_analysis = SeasonalAnalysis(
             directory = self.dlg.lineEdit_directory_seasonal.text(),
-            mask_layer_file = self.dlg.lineEdit_mask_file.text(),
             feature = self.dlg.spinBox_feature.value(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.seasonal_analysis)

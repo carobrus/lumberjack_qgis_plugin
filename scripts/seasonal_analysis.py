@@ -92,10 +92,9 @@ class CalculateFeaturesTask(PreProcessTask):
 
 
 class SeasonalAnalysis(PreProcessTask):
-    def __init__(self, directory, mask_layer_file, feature, lumberjack_instance):
+    def __init__(self, directory, feature, lumberjack_instance):
         super().__init__("Seasonal Analysis", QgsTask.CanCancel)
         self.directory = directory
-        self.mask_layer_file = mask_layer_file
         self.feature_number = feature
         self.lumberjack_instance = lumberjack_instance
 
@@ -123,33 +122,30 @@ class SeasonalAnalysis(PreProcessTask):
 
         self.days = []
         self.data = []
-        files = []
         for place in places:
+
+            mask = gdal.Open(place.mask, gdal.GA_ReadOnly)
+            mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
+
+            stack_files = []
             for image in place.images:
                 file_name_stack = "{}/{}_sr_{}".format(
                     image.path, image.base_name, "stack.tif")
                 file_name_metadata = "{}/{}_{}".format(
                     image.path, image.base_name, "MTL.txt")
-                files.append([file_name_stack, file_name_metadata])
+                stack_files.append([file_name_stack, file_name_metadata])
 
-        mask = gdal.Open(self.mask_layer_file, gdal.GA_ReadOnly)
-        mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
-        band_arrays = np.zeros((mask.RasterYSize, mask.RasterXSize, len(files)), dtype=np.float32)
+            for i, file in enumerate(stack_files):
+                features = gdal.Open(file[0], gdal.GA_ReadOnly)
+                band = features.GetRasterBand(self.feature_number)
 
-        for i, file in enumerate(files):
-            features = gdal.Open(file[0], gdal.GA_ReadOnly)
-            band = features.GetRasterBand(self.feature_number)
-            # band_arrays[:, :, i] = band.ReadAsArray()
+                date = self.get_date_from_metadata(file[1])
+                number_of_day = self.transform_day(date)
 
-            date = self.get_date_from_metadata(file[1])
-            number_of_day = self.transform_day(date)
+                print("Working on image of day: {}".format(number_of_day))
+                self.days.append(number_of_day)
+                self.data.append(band.ReadAsArray()[mask_array < 2])
 
-            print("Working on image of day: {}".format(number_of_day))
-            self.days.append(number_of_day)
-            self.data.append(band.ReadAsArray()[mask_array < 2])
-
-        # band_filtered = band_arrays[mask_array < 2, :]
-        # return band_filtered, self.days
 
 
     def run(self):
