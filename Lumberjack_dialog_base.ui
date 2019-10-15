@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>581</height>
+    <height>631</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>504</width>
-    <height>581</height>
+    <height>631</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -28,6 +28,12 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="27" column="0">
     <widget class="QPlainTextEdit" name="plainTextEdit">
+     <property name="minimumSize">
+      <size>
+       <width>486</width>
+       <height>84</height>
+      </size>
+     </property>
      <property name="font">
       <font>
        <family>Courier New</family>
@@ -40,6 +46,12 @@
    </item>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
+     <property name="minimumSize">
+      <size>
+       <width>486</width>
+       <height>506</height>
+      </size>
+     </property>
      <property name="autoFillBackground">
       <bool>true</bool>
      </property>
@@ -55,7 +67,34 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_porting">
+         <item>
+          <widget class="QPushButton" name="pushButton_import">
+           <property name="text">
+            <string>Import Classifier</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_export">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Export Classifier</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_training">
+         <property name="minimumSize">
+          <size>
+           <width>462</width>
+           <height>210</height>
+          </size>
+         </property>
          <property name="title">
           <string>Training</string>
          </property>
@@ -156,7 +195,7 @@
                <string>DEM Textures</string>
               </property>
               <property name="checked">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -204,6 +243,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_testing">
+         <property name="minimumSize">
+          <size>
+           <width>462</width>
+           <height>104</height>
+          </size>
+         </property>
          <property name="title">
           <string>Testing</string>
          </property>

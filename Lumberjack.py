@@ -92,8 +92,6 @@ class Lumberjack:
         self.classifier = None
         self.features = None
         self.testing_ratio = None
-        self.include_textures_image = None
-        self.include_textures_places = None
         self.calculate_features_task = None
         self.tree_correction_task = None
 
@@ -241,6 +239,21 @@ class Lumberjack:
         filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","","*.tif; *.tiff")
         self.dlg.lineEdit_output_dem.setText(filename[0])
 
+    def export_classifier(self):
+        filename = QFileDialog.getSaveFileName(self.dlg, "Save output file ","","*.pkl")
+        file = filename[0]
+        if file != "" :
+            self.classifier.export_classifier(file)
+
+    def import_classifier(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select input classifier file","","*.pkl")
+        file = filename[0]
+        if file != "" :
+            self.classifier = Classifier()
+            self.classifier.import_classifier(file)
+            self.dlg.pushButton_testing.setEnabled(True)
+            self.dlg.pushButton_prediction.setEnabled(True)
+
     def run(self):
         """Run method that performs all the real work"""
         # Create the dialog with elements (after translation) and keep reference
@@ -279,6 +292,9 @@ class Lumberjack:
             self.dlg.pushButton_output_dem.clicked.connect(self.search_output_dem)
 
             self.dlg.pushButton_correct_trees.clicked.connect(self.correct_trees)
+
+            self.dlg.pushButton_export.clicked.connect(self.export_classifier)
+            self.dlg.pushButton_import.clicked.connect(self.import_classifier)
 
             self.dlg.tabWidget.setCurrentIndex(0)
 
@@ -367,43 +383,65 @@ class Lumberjack:
 
         self.classifier = Classifier()
         self.testing_ratio = self.dlg.checkBox_testing_ratio.isChecked()
-        self.include_textures_image = self.dlg.checkBox_textures.isChecked()
-        self.include_textures_places = self.dlg.checkBox_dem.isChecked()
 
         self.train_task = TrainTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
             features = self.features,
             classifier = self.classifier,
             testing_ratio = self.testing_ratio,
-            include_textures_image = self.include_textures_image,
-            include_textures_places = self.include_textures_places,
+            include_textures_image = self.dlg.checkBox_textures.isChecked(),
+            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.train_task)
 
         self.dlg.pushButton_testing.setEnabled(True)
         self.dlg.pushButton_prediction.setEnabled(True)
+        self.dlg.pushButton_export.setEnabled(True)
 
 
     def test(self):
         self.dlg.hide()
+        self.features = []
+        if self.dlg.checkBox_bandsAlgebra.isChecked():
+            self.features.append(AlgebraFeature())
+        if self.dlg.checkBox_medianFilter.isChecked():
+            self.features.append(FilterFeature())
+            self.features.append(FilterGaussFeature())
+        if self.dlg.checkBox_ndvi.isChecked():
+            self.features.append(NdviFeature())
+        if self.dlg.checkBox_dem.isChecked():
+            self.features.append(DayFeature())
+
         self.test_task = TestTask(
             directory = self.dlg.lineEdit_testingDirectory.text(),
             features = self.features,
             classifier = self.classifier,
             testing_ratio = self.testing_ratio,
-            include_textures_image = self.include_textures_image,
-            include_textures_places = self.include_textures_places,
+            include_textures_image = self.dlg.checkBox_textures.isChecked(),
+            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.test_task)
 
 
     def predict(self):
         self.dlg.hide()
+        self.features = []
+        if self.dlg.checkBox_bandsAlgebra.isChecked():
+            self.features.append(AlgebraFeature())
+        if self.dlg.checkBox_medianFilter.isChecked():
+            self.features.append(FilterFeature())
+            self.features.append(FilterGaussFeature())
+        if self.dlg.checkBox_ndvi.isChecked():
+            self.features.append(NdviFeature())
+        if self.dlg.checkBox_dem.isChecked():
+            self.features.append(DayFeature())
+
+
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_predictionDirectoy.text(),
             features = self.features,
-            include_textures_image = self.include_textures_image,
-            include_textures_places = self.include_textures_places,
+            include_textures_image = self.dlg.checkBox_textures.isChecked(),
+            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
 
         self.predict_task = PredictTask(

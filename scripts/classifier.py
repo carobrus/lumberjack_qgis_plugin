@@ -10,6 +10,7 @@ from osgeo import gdal
 from osgeo import gdal_array
 from osgeo import ogr
 import numpy as np
+import pickle
 
 
 class Classifier:
@@ -124,3 +125,13 @@ class Classifier:
         outband.WriteArray(class_prediction)
         outband.FlushCache()
         out_raster_ds = None
+
+
+    def export_classifier(self, pkl_filename):
+        with open(pkl_filename, 'wb') as file:
+            pickle.dump(self.__rf, file)
+
+
+    def import_classifier(self, pkl_filename):
+        with open(pkl_filename, 'rb') as file:
+            self.__rf = pickle.load(file)

@@ -31,8 +31,9 @@ class PredictTask(PreProcessTask):
                         image.path, image.base_name, PredictTask.STACK_SUFFIX)
                     time_stamp = self.start_time_str[:19]
                     output_file = "{}/{}_sr_{}_{}".format(
-                        image.path, image.base_name, PredictTask.PREDICTION_SUFFIX,
-                        time_stamp.replace(" ", "_").replace(":","-"))
+                        image.path, image.base_name,
+                        time_stamp.replace(" ", "_").replace(":","-"),
+                        PredictTask.PREDICTION_SUFFIX)
                     self.output_files.append(output_file)
                     self.classifier.predict_an_image(file_name_stack, output_file)
 
