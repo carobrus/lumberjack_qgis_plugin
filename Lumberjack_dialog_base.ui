@@ -88,11 +88,76 @@
         </layout>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_features">
+         <property name="title">
+          <string>Features</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_12">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="checkBox_bandsAlgebra">
+            <property name="text">
+             <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_medianFilter">
+            <property name="text">
+             <string>Median and Gaussian Filter</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_ndvi">
+            <property name="text">
+             <string>NDVI</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_textures">
+            <property name="text">
+             <string>Textures</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_dem">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>DEM Textures</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_training">
          <property name="minimumSize">
           <size>
            <width>462</width>
-           <height>210</height>
+           <height>100</height>
           </size>
          </property>
          <property name="title">
@@ -128,76 +193,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_features" stretch="0,0,0,0,0,0">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="sizeConstraint">
-             <enum>QLayout::SetDefaultConstraint</enum>
-            </property>
-            <item>
-             <widget class="QLabel" name="label_features">
-              <property name="text">
-               <string>Features</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox_bandsAlgebra">
-              <property name="text">
-               <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox_medianFilter">
-              <property name="text">
-               <string>Median and Gaussian Filter</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox_ndvi">
-              <property name="text">
-               <string>NDVI</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox_textures">
-              <property name="text">
-               <string>Textures</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="checkBox_dem">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="text">
-               <string>DEM Textures</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
             </item>
            </layout>
           </item>
@@ -689,18 +684,40 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>lineEdit_trainingDirectory</tabstop>
-  <tabstop>pushButton_trainingDirectory</tabstop>
+  <tabstop>pushButton_import</tabstop>
+  <tabstop>pushButton_export</tabstop>
   <tabstop>checkBox_bandsAlgebra</tabstop>
   <tabstop>checkBox_medianFilter</tabstop>
   <tabstop>checkBox_ndvi</tabstop>
   <tabstop>checkBox_textures</tabstop>
   <tabstop>checkBox_dem</tabstop>
+  <tabstop>lineEdit_trainingDirectory</tabstop>
+  <tabstop>pushButton_trainingDirectory</tabstop>
+  <tabstop>checkBox_testing_ratio</tabstop>
+  <tabstop>pushButton_training</tabstop>
   <tabstop>lineEdit_testingDirectory</tabstop>
   <tabstop>pushButton_testingDirectory</tabstop>
+  <tabstop>pushButton_testing</tabstop>
   <tabstop>lineEdit_predictionDirectoy</tabstop>
   <tabstop>pushButton_predictionDirectory</tabstop>
+  <tabstop>checkBox_addFile</tabstop>
+  <tabstop>pushButton_prediction</tabstop>
   <tabstop>plainTextEdit</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>lineEdit_directory_seasonal</tabstop>
+  <tabstop>pushButton_seasonal</tabstop>
+  <tabstop>pushButton_calculate_features</tabstop>
+  <tabstop>spinBox_feature</tabstop>
+  <tabstop>pushButton_boxplot</tabstop>
+  <tabstop>lineEdit_dem</tabstop>
+  <tabstop>pushButton_search_dem</tabstop>
+  <tabstop>lineEdit_tree_mask</tabstop>
+  <tabstop>pushButton_search_tree_mask</tabstop>
+  <tabstop>spinBox_dilation</tabstop>
+  <tabstop>lineEdit_output_dem</tabstop>
+  <tabstop>pushButton_output_dem</tabstop>
+  <tabstop>checkBox_add_dem</tabstop>
+  <tabstop>pushButton_correct_trees</tabstop>
  </tabstops>
  <resources/>
  <connections/>
