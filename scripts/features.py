@@ -75,7 +75,8 @@ class DayFeature(Feature):
         file_out = self.file_format.format(file_in[:-4])
         file_name_metadata = "{}_{}".format(file_in[:-14], IMAGE_METADATA_SUFFIX)
         date = self.get_date_from_metadata(file_name_metadata)
-        number_of_day = self.transform_day(date)
+        row = int(self.get_row_from_metadata(file_name_metadata))
+        number_of_day = self.transform_day(date, row)
         number_of_day_normalized = number_of_day / 366
         number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
 
@@ -97,19 +98,28 @@ class DayFeature(Feature):
         outband = output_dataset.GetRasterBand(2)
         outband.WriteArray(band)
 
-    def transform_day(self, date):
+    def transform_day(self, date, row):
         year, month, day = date.split("-")
         year = int(year)
         month = int(month)
         day = int(day)
         number_of_day = (datetime.date(year, month, day) -
                          datetime.date(year, 1, 1)).days + 1
+        if (row < 60): # If the image is from the northern hemisphere
+            number_of_day = (number_of_day + 182) % 365
         return number_of_day
 
     def get_date_from_metadata(self, file):
         f = open(file, 'r')
         for line in f.readlines():
             if "DATE_ACQUIRED =" in line:
+                l = line.split("=")
+                return l[1]
+
+    def get_row_from_metadata(self, file):
+        f = open(file, 'r')
+        for line in f.readlines():
+            if "WRS_ROW =" in line:
                 l = line.split("=")
                 return l[1]
 

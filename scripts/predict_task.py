@@ -11,6 +11,7 @@ class PredictTask(PreProcessTask):
         self.classifier = classifier
         self.li = lumberjack_instance
         self.output_files = []
+        self.exception = None
 
 
     def run(self):
