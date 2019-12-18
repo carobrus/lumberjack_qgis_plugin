@@ -13,12 +13,6 @@
 #% required : yes
 #%end
 
-#%option G_OPT_F_BIN_INPUT
-#% key: input_file
-#% type: string
-#% required : yes
-#%end
-
 #%option
 #% key: size
 #% type: integer
@@ -53,6 +47,11 @@
 #% description: Rescales instead of recoding the image
 #%end
 
+#%flag
+#% key: d
+#% description: Calculate textures of DEM instead of Landsat Images
+#%end
+
 
 import sys
 import grass.script as gscript
@@ -67,11 +66,11 @@ import atexit
 def main():
 	options,flags = gscript.parser()
 	input_dir = options['input']
-	input_file = options['input_file']
 	sizeMovingWindow = options['size']
 	distance = options['distance']
 	numCategories = options['categories']
 	recode = flags['r']
+	use_dem = flags['d']
 
 	start_time = time.time()
 
@@ -85,10 +84,6 @@ def main():
 			print "The raster map cannot have more than 255 categories."
 	else:
 		gscript.run_command('g.mapset', mapset='PERMANENT')
-		gscript.run_command('g.proj', flags='c', georef=input_file)
-		gscript.run_command('r.in.gdal', flags='k', input=input_file, output='region_raster', overwrite=True)
-		## Manages the boundary definitions for the geographic region.
-		gscript.run_command('g.region', raster='region_raster')
 
 		# r=root, d=directories, f = files
 		for r, d, f in os.walk(input_dir):
@@ -96,17 +91,32 @@ def main():
 			count = 1
 			for file in f:
 				full_path = os.path.join(r, file)
-				if (full_path[-9:-5] == "band"):
-					print "File: ", full_path
-					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='inputBands.{}'.format(count), overwrite=True)
+				if (full_path[-7:-4] == "ext") and (not use_dem):
+					gscript.run_command('g.proj', flags='c', georef=full_path)
+					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='region_raster', overwrite=True)
+					gscript.run_command('g.region', raster='region_raster')
+
+				if (full_path[-7:-4] == "dem") and (use_dem):
+					print "DEM: ", full_path
+
+					gscript.run_command('g.proj', flags='c', georef=full_path)
+					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='inputBands.1', overwrite=True)
+					## Manages the boundary definitions for the geographic region.
+					gscript.run_command('g.region', raster='inputBands.1')
+					output_file = full_path[:-4] + "_text.tif"
+					print "Output File to be created: ", output_file
+					count += 1
+
+				if (full_path[-9:-5] == "band") and (not use_dem):
 					if (count == 1):
 						output_file = full_path[:-12] + "text.tif"
 						print "Output File to be created: ", output_file
+					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='inputBands.{}'.format(count), overwrite=True)
 					count += 1
 
-			if (count == 8):
+			if (count == 8) or (count == 2):
 
-				bandCount = 7
+				bandCount = count-1
 				rasterName = []
 
 				inputRescale  = "inputBands.{}"
@@ -154,11 +164,9 @@ def main():
 
 def cleanup():
 	## Remove raster maps from group
-
 	cf = gscript.find_file(name='region_raster', element='group')
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='group', name='region_raster', quiet=True)
-
 
 	cf = gscript.find_file(name='inputBands', element='group')
 	if not cf['fullname'] == '':
