@@ -79,9 +79,9 @@ def main():
 		if (int(sizeMovingWindow) % 2 == 0) or (int(sizeMovingWindow) < 2) or (int(distance) >= int(sizeMovingWindow)) or (int(numCategories) > 255):
 			raise
 	except:
-			print "Size of moving windows must be odd and >=3."
-			print "The distance must be smaller than the size of the moving window."
-			print "The raster map cannot have more than 255 categories."
+		print "Size of moving windows must be odd and >=3."
+		print "The distance must be smaller than the size of the moving window."
+		print "The raster map cannot have more than 255 categories."
 	else:
 		gscript.run_command('g.mapset', mapset='PERMANENT')
 
@@ -91,10 +91,10 @@ def main():
 			count = 1
 			for file in f:
 				full_path = os.path.join(r, file)
-				if (full_path[-7:-4] == "ext") and (not use_dem):
+				if (full_path[-7:-4] == "reg") and (not use_dem):
 					gscript.run_command('g.proj', flags='c', georef=full_path)
 					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='region_raster', overwrite=True)
-					gscript.run_command('g.region', raster='region_raster')
+					gscript.run_command('g.region', raster='region_raster', overwrite=True)
 
 				if (full_path[-7:-4] == "dem") and (use_dem):
 					print "DEM: ", full_path
@@ -164,14 +164,6 @@ def main():
 
 def cleanup():
 	## Remove raster maps from group
-	cf = gscript.find_file(name='region_raster', element='group')
-	if not cf['fullname'] == '':
-		gscript.run_command('g.remove', flags='f', type='group', name='region_raster', quiet=True)
-
-	cf = gscript.find_file(name='inputBands', element='group')
-	if not cf['fullname'] == '':
-		gscript.run_command('g.remove', flags='f', type='group', name='inputBands', quiet=True)
-
 	cf = gscript.find_file(name='outFileBands', element='group')
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='group', name='outFileBands', quiet=True)
@@ -181,6 +173,10 @@ def cleanup():
 		gscript.run_command('g.remove', flags='f', type='group', name='inputBands', quiet=True)
 
 	## Remove raster maps
+	cf = gscript.find_file(name='region_raster', element='cell')
+	if not cf['fullname'] == '':
+		gscript.run_command('g.remove', flags='f', type='raster', pattern='region_raster', quiet=True)
+
 	cf = gscript.find_file(name='band.1_ASM', element='cell')
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='raster', pattern='band.*', quiet=True)
