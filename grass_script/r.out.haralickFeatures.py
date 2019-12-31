@@ -75,8 +75,9 @@ def main():
 	start_time = time.time()
 
 	try:
-		##Validate parameters
-		if (int(sizeMovingWindow) % 2 == 0) or (int(sizeMovingWindow) < 2) or (int(distance) >= int(sizeMovingWindow)) or (int(numCategories) > 255):
+		# Validate parameters
+		if (int(sizeMovingWindow) % 2 == 0) or (int(sizeMovingWindow) < 2) or \
+				(int(distance) >= int(sizeMovingWindow)) or (int(numCategories) > 255):
 			raise
 	except:
 		print "Size of moving windows must be odd and >=3."
@@ -90,6 +91,7 @@ def main():
 			print "Checking directory: ", r
 			count = 1
 			for file in f:
+				# Import bands and set the region
 				full_path = os.path.join(r, file)
 				if (full_path[-8:-4] == "_reg") and (not use_dem):
 					gscript.run_command('g.proj', flags='c', georef=full_path)
@@ -111,7 +113,8 @@ def main():
 					if (count == 1):
 						output_file = full_path[:-12] + "text.tif"
 						print "Output File to be created: ", output_file
-					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='inputBands.{}'.format(count), overwrite=True)
+					gscript.run_command('r.in.gdal', flags='k', input=full_path,
+										output='inputBands.{}'.format(count), overwrite=True)
 					count += 1
 
 			if (count == 8) or (count == 2):
@@ -122,37 +125,49 @@ def main():
 				inputRescale  = "inputBands.{}"
 				outputRescale = "bandsRescale.{}"
 
+				# Quantize image so textures can be perfom
 				if recode == False:
 					for band in range(1,bandCount+1):
-						rules = gscript.read_command('r.quantile', flags='r', input=inputRescale.format(band), quantiles=numCategories, overwrite=True, quiet=True)
+						rules = gscript.read_command('r.quantile', flags='r', input=inputRescale.format(band),
+													 quantiles=numCategories, overwrite=True, quiet=True)
 						print "Recoding raster map {}".format(band)
-						gscript.write_command('r.recode', input=inputRescale.format(band), output=outputRescale.format(band), rules='-', overwrite=True, stdin=rules)
+						gscript.write_command('r.recode', input=inputRescale.format(band),
+											  output=outputRescale.format(band), rules='-', overwrite=True, stdin=rules)
 				else:
 					for band in range(1,bandCount+1):
-						gscript.run_command('r.rescale', input=inputRescale.format(band), output=outputRescale.format(band), to='1,'+numCategories, overwrite=True)
+						gscript.run_command('r.rescale', input=inputRescale.format(band),
+											output=outputRescale.format(band), to='1,'+numCategories, overwrite=True)
 
 				outputTexture = "band.{}"
 
+				# Calculate textures using parallel jobs
 				queue = ParallelModuleQueue(nprocs=4)
-				texture = Module('r.texture', flags='n', method=['asm','contrast','var','idm','entr'], size=sizeMovingWindow, distance=distance, overwrite=True, run_=False)
+				texture = Module('r.texture', flags='n', method=['asm','contrast','var','idm','entr'],
+								 size=sizeMovingWindow, distance=distance, overwrite=True, run_=False)
 
 				for band in range(1,bandCount+1):
 					m = deepcopy(texture)(input=outputRescale.format(band), output=outputTexture.format(band))
 					queue.put(m)
 				queue.wait()
 
+				# Generate group to export the tiff image. This is required to stack all the bands in the same file.
 				for band in range(1,bandCount+1):
-					rasterName.extend([outputTexture.format(band)+'_ASM', outputTexture.format(band)+'_Contr',outputTexture.format(band)+'_Var',outputTexture.format(band)+'_IDM',outputTexture.format(band)+'_Entr'])
-					## Generate group to export the tiff image
-					groupInput = outputTexture.format(band)+'_ASM,'+outputTexture.format(band)+'_Contr,'+outputTexture.format(band)+'_Var,'+outputTexture.format(band)+'_IDM,'+outputTexture.format(band)+'_Entr'
+					rasterName.extend([outputTexture.format(band)+'_ASM', outputTexture.format(band)+'_Contr',
+									   outputTexture.format(band)+'_Var',outputTexture.format(band)+'_IDM',
+									   outputTexture.format(band)+'_Entr'])
+					groupInput = (outputTexture.format(band)  +'_ASM,' + outputTexture.format(band) +
+								  '_Contr,' + outputTexture.format(band) + '_Var,' + outputTexture.format(band) +
+								  '_IDM,'+outputTexture.format(band)+'_Entr')
 					gscript.run_command('i.group', group='outFileBands', input=groupInput, quiet=True)
 
-				## Creating tiff image
-				gscript.run_command('r.out.gdal', flags='cm', input='outFileBands', output=output_file, format='GTiff', type='Float32', overwrite=True, verbose=True)
+				# Create the output tiff image
+				gscript.run_command('r.out.gdal', flags='cm', input='outFileBands', output=output_file, format='GTiff',
+									type='Float32', overwrite=True, verbose=True)
 
 				print "Finished creating features"
-				print "Renaming raster bands"
 
+				# Edit metadata to give a name to each band
+				print "Renaming raster bands"
 				src_ds = gdal.Open(output_file)
 				for band in range(src_ds.RasterCount):
 					band += 1
@@ -163,7 +178,7 @@ def main():
 
 
 def cleanup():
-	## Remove raster maps from group
+	# Remove raster maps from group
 	cf = gscript.find_file(name='outFileBands', element='group')
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='group', name='outFileBands', quiet=True)
@@ -172,7 +187,7 @@ def cleanup():
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='group', name='inputBands', quiet=True)
 
-	## Remove raster maps
+	# Remove raster maps
 	cf = gscript.find_file(name='region_raster', element='cell')
 	if not cf['fullname'] == '':
 		gscript.run_command('g.remove', flags='f', type='raster', pattern='region_raster', quiet=True)
