@@ -12,14 +12,14 @@ from .classifier import Classifier
 from .. import Lumberjack
 
 
-IMAGE_METADATA_SUFFIX = "MTL.txt"
-EXTENSION_FILE_SUFFIX = "ext.tif"
-DEM_TEXTURES_SUFFIX = "textures.tif"
-TEXTURES_SUFFIX = "text.tif"
-CROP_SUFFIX = "crop.tif"
-MERGED_SUFFIX = "merged.tif"
-SHAPEFILE_SUFFIX = "roi.shp"
-MASK_SUFFIX = "mask.tif"
+IMAGE_METADATA_SUFFIX = "_MTL.txt"
+EXTENSION_FILE_SUFFIX = "_reg.tif"
+DEM_TEXTURES_SUFFIX = "_text.tif"
+TEXTURES_SUFFIX = "_text.tif"
+CROP_SUFFIX = "_crop.tif"
+MERGED_SUFFIX = "_merged.tif"
+SHAPEFILE_SUFFIX = "_roi.shp"
+MASK_SUFFIX = "_mask.tif"
 BAND_TOTAL = 7
 
 
@@ -118,9 +118,9 @@ class PreProcessTask(QgsTask):
 
                 file_name_band = "{}/{}_sr_band{}.tif".format(
                     image.path, image.base_name, "{}")
-                file_name_crop = "{}/{}_sr_band{}_{}".format(
+                file_name_crop = "{}/{}_sr_band{}{}".format(
                     image.path, image.base_name, "{}", CROP_SUFFIX)
-                file_name_merged = "{}/{}_sr_{}".format(
+                file_name_merged = "{}/{}_sr{}".format(
                     image.path, image.base_name, MERGED_SUFFIX)
 
                 self.crop_images(

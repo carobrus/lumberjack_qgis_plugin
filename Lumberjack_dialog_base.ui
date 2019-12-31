@@ -485,6 +485,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_boxplot">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Plot boxplot</string>
             </property>

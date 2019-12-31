@@ -1,8 +1,8 @@
 from .preprocess_task import *
 
 class PredictTask(PreProcessTask):
-    PREDICTION_SUFFIX = "predic.tif"
-    STACK_SUFFIX = "stack.tif"
+    PREDICTION_SUFFIX = "_predic.tif"
+    STACK_SUFFIX = "_stack.tif"
 
 
     def __init__(self, directory, classifier, lumberjack_instance):
@@ -28,10 +28,10 @@ class PredictTask(PreProcessTask):
             self.output_files = []
             for place in places:
                 for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}".format(
+                    file_name_stack = "{}/{}_sr{}".format(
                         image.path, image.base_name, PredictTask.STACK_SUFFIX)
                     time_stamp = self.start_time_str[:19]
-                    output_file = "{}/{}_sr_{}_{}".format(
+                    output_file = "{}/{}_sr_{}{}".format(
                         image.path, image.base_name,
                         time_stamp.replace(" ", "_").replace(":","-"),
                         PredictTask.PREDICTION_SUFFIX)

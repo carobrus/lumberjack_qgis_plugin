@@ -1,5 +1,6 @@
 from .preprocess_task import *
 from .classification_task import *
+from .train_task import TrainTask
 
 class TestTask(ClassificationTask):
     def __init__(self, directory, features,
@@ -39,9 +40,9 @@ class TestTask(ClassificationTask):
 
                 for place in places:
                     for image in place.images:
-                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                        file_name_stack = "{}/{}_sr_{}{}".format(
                             image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
-                        file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                        file_merged = "{}/{}_sr{}".format(image.path, image.base_name, MERGED_SUFFIX)
                         files = [file_merged]
                         for feature in self.features:
                             files.append(feature.file_format.format(file_merged[:-4]))
@@ -56,7 +57,7 @@ class TestTask(ClassificationTask):
                 # Add samples to train
                 for place in places:
                     for image in place.images:
-                        file_name_stack = "{}/{}_sr_{}_{}".format(
+                        file_name_stack = "{}/{}_sr_{}{}".format(
                             image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
                         self.add_samples(file_name_stack)
             else:

@@ -91,12 +91,12 @@ def main():
 			count = 1
 			for file in f:
 				full_path = os.path.join(r, file)
-				if (full_path[-7:-4] == "reg") and (not use_dem):
+				if (full_path[-8:-4] == "_reg") and (not use_dem):
 					gscript.run_command('g.proj', flags='c', georef=full_path)
 					gscript.run_command('r.in.gdal', flags='k', input=full_path, output='region_raster', overwrite=True)
 					gscript.run_command('g.region', raster='region_raster', overwrite=True)
 
-				if (full_path[-7:-4] == "dem") and (use_dem):
+				if (full_path[-8:-4] == "_dem") and (use_dem):
 					print "DEM: ", full_path
 
 					gscript.run_command('g.proj', flags='c', georef=full_path)

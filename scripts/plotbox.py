@@ -49,8 +49,9 @@ class PlotCanvas(FigureCanvas):
     def plot(self):
         data = self.data
         ax = self.figure.add_subplot(111)
-        ax.set_xticklabels(self.days, rotation=90)
-        ax.boxplot(data, showfliers=False, positions=self.days, widths=3)
-        ax.set_xlim(xmin=0, xmax=366)
+        if (self.days != []):
+            ax.set_xticklabels(self.days, rotation=90)
+            ax.boxplot(data, showfliers=False, positions=self.days, widths=3)
+            ax.set_xlim(xmin=0, xmax=366)
         # ax.set_title('Threshholds')
         self.draw()

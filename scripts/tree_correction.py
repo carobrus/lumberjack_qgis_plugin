@@ -12,13 +12,14 @@ from .. import Lumberjack
 class TreeCorrectionTask(QgsTask):
 
 
-    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount, lumberjack_instance):
+    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount, smooth_it, lumberjack_instance):
         super().__init__("Tree Correction",  QgsTask.CanCancel)
         self.dem = dem_file
         self.tree_mask = tree_mask_file
         self.dilate_amount = dilate_amount
         self.lumberjack_instance = lumberjack_instance
         self.output_file = output_file
+        self.smooth_it = smooth_it
 
 
     def run(self):
@@ -86,7 +87,7 @@ class TreeCorrectionTask(QgsTask):
                 targetBand = dem_raster_band,
                 maskBand = mask_raster_band,
                 maxSearchDist = 10,
-                smoothingIterations = 0
+                smoothingIterations = self.smooth_it
             )
             dataset_dem = None
             dataset_mask = None

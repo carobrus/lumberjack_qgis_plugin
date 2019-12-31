@@ -29,9 +29,9 @@ class CalculateFeaturesTask(PreProcessTask):
 
             for place in places:
                 for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}".format(
-                        image.path, image.base_name, "stack.tif")
-                    file_merged = "{}/{}_sr_{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                    file_name_stack = "{}/{}_sr{}".format(
+                        image.path, image.base_name, "_stack.tif")
+                    file_merged = "{}/{}_sr{}".format(image.path, image.base_name, MERGED_SUFFIX)
                     files = [file_merged]
                     for feature in self.features:
                         files.append(feature.file_format.format(file_merged[:-4]))
@@ -123,28 +123,28 @@ class SeasonalAnalysis(PreProcessTask):
         self.days = []
         self.data = []
         for place in places:
+            if (place.mask != ""):
+                mask = gdal.Open(place.mask, gdal.GA_ReadOnly)
+                mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
 
-            mask = gdal.Open(place.mask, gdal.GA_ReadOnly)
-            mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
+                stack_files = []
+                for image in place.images:
+                    file_name_stack = "{}/{}_sr_{}".format(
+                        image.path, image.base_name, "stack.tif")
+                    file_name_metadata = "{}/{}_{}".format(
+                        image.path, image.base_name, "MTL.txt")
+                    stack_files.append([file_name_stack, file_name_metadata])
 
-            stack_files = []
-            for image in place.images:
-                file_name_stack = "{}/{}_sr_{}".format(
-                    image.path, image.base_name, "stack.tif")
-                file_name_metadata = "{}/{}_{}".format(
-                    image.path, image.base_name, "MTL.txt")
-                stack_files.append([file_name_stack, file_name_metadata])
+                for i, file in enumerate(stack_files):
+                    features = gdal.Open(file[0], gdal.GA_ReadOnly)
+                    band = features.GetRasterBand(self.feature_number)
 
-            for i, file in enumerate(stack_files):
-                features = gdal.Open(file[0], gdal.GA_ReadOnly)
-                band = features.GetRasterBand(self.feature_number)
+                    date = self.get_date_from_metadata(file[1])
+                    number_of_day = self.transform_day(date)
 
-                date = self.get_date_from_metadata(file[1])
-                number_of_day = self.transform_day(date)
-
-                print("Working on image of day: {}".format(number_of_day))
-                self.days.append(number_of_day)
-                self.data.append(band.ReadAsArray()[mask_array < 2])
+                    print("Working on image of day: {}".format(number_of_day))
+                    self.days.append(number_of_day)
+                    self.data.append(band.ReadAsArray()[mask_array < 2])
 
 
 
@@ -156,7 +156,6 @@ class SeasonalAnalysis(PreProcessTask):
             print("=" * 30 + self.start_time_str + "=" * 30)
             self.start_time = time.time()
 
-            # self.data, self.days = self.calculate_threshold()
             self.calculate_threshold()
 
             self.elapsed_time = time.time() - self.start_time

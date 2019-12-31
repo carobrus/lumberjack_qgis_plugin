@@ -307,6 +307,7 @@ class Lumberjack:
             tree_mask_file = self.dlg.lineEdit_tree_mask.text(),
             output_file = self.dlg.lineEdit_output_dem.text(),
             dilate_amount = self.dlg.spinBox_dilation.value(),
+            smooth_it = 0,
             lumberjack_instance = self
         )
         QgsApplication.taskManager().addTask(self.tree_correction_task)
@@ -357,6 +358,7 @@ class Lumberjack:
         self.dlg.spinBox_feature.setRange(1, range)
         self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
+        self.dlg.pushButton_boxplot.setEnabled(True)
         # self.dlg.open()
 
 

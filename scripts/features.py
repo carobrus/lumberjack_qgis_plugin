@@ -8,12 +8,12 @@ from . import bands_algebra
 from . import filters
 from . import ndvi
 
-ALGEBRA_SUFFIX = "alge.tif"
-FILTER_SUFFIX = "filt.tif"
-GAUSS_SUFFIX = "gaus.tif"
-NDVI_SUFFIX =  "ndvi.tif"
-DAY_SUFFIX = "day.tif"
-IMAGE_METADATA_SUFFIX = "MTL.txt"
+ALGEBRA_SUFFIX = "_alge.tif"
+FILTER_SUFFIX = "_filt.tif"
+GAUSS_SUFFIX = "_gaus.tif"
+NDVI_SUFFIX =  "_ndvi.tif"
+DAY_SUFFIX = "_day.tif"
+IMAGE_METADATA_SUFFIX = "_MTL.txt"
 
 
 class Feature:
@@ -27,7 +27,7 @@ class Feature:
 class AlgebraFeature(Feature):
     def __init__(self):
         super().__init__()
-        self.file_format = "{}_{}".format("{}", ALGEBRA_SUFFIX)
+        self.file_format = "{}{}".format("{}", ALGEBRA_SUFFIX)
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
@@ -37,7 +37,7 @@ class AlgebraFeature(Feature):
 class FilterFeature(Feature):
     def __init__(self):
         super().__init__()
-        self.file_format = "{}_{}".format("{}", FILTER_SUFFIX)
+        self.file_format = "{}{}".format("{}", FILTER_SUFFIX)
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
@@ -48,7 +48,7 @@ class FilterFeature(Feature):
 class FilterGaussFeature(Feature):
     def __init__(self):
         super().__init__()
-        self.file_format = "{}_{}".format("{}", GAUSS_SUFFIX)
+        self.file_format = "{}{}".format("{}", GAUSS_SUFFIX)
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
@@ -59,7 +59,7 @@ class FilterGaussFeature(Feature):
 class NdviFeature(Feature):
     def __init__(self):
         super().__init__()
-        self.file_format = "{}_{}".format("{}", NDVI_SUFFIX)
+        self.file_format = "{}{}".format("{}", NDVI_SUFFIX)
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
@@ -69,11 +69,11 @@ class NdviFeature(Feature):
 class DayFeature(Feature):
     def __init__(self):
         super().__init__()
-        self.file_format = "{}_{}".format("{}", DAY_SUFFIX)
+        self.file_format = "{}{}".format("{}", DAY_SUFFIX)
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
-        file_name_metadata = "{}_{}".format(file_in[:-14], IMAGE_METADATA_SUFFIX)
+        file_name_metadata = "{}{}".format(file_in[:-14], IMAGE_METADATA_SUFFIX)
         date = self.get_date_from_metadata(file_name_metadata)
         row = int(self.get_row_from_metadata(file_name_metadata))
         number_of_day = self.transform_day(date, row)
@@ -129,4 +129,4 @@ class DayFeature(Feature):
 #         super().__init__()
 #
 #     def execute(file_in):
-#         file_out = "{}_{}".format(file_in[:-4], PERSONALIZED_SUFFIX)
+#         file_out = "{}{}".format(file_in[:-4], PERSONALIZED_SUFFIX)
