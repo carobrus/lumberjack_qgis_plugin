@@ -1,14 +1,15 @@
 from .preprocess_task import *
 from .classification_task import *
 
+
 class TrainTask(ClassificationTask):
     STACK_SUFFIX = "_stack.csv"
+
 
     def __init__(self, directory, features,
                  classifier, testing_ratio, include_textures_image,
                  include_textures_places, lumberjack_instance):
         super().__init__("Lumberjack training", QgsTask.CanCancel)
-
         self.directory = directory
         self.features = features
         self.classifier = classifier
@@ -16,7 +17,6 @@ class TrainTask(ClassificationTask):
         self.include_textures_image = include_textures_image
         self.include_textures_places = include_textures_places
         self.li = lumberjack_instance
-
         self.classes = None
         self.exception = None
 
@@ -38,36 +38,44 @@ class TrainTask(ClassificationTask):
             self.rasterize_vector_files(places)
             self.pre_process_images(places)
 
+            # Stack all features
             for place in places:
                 for image in place.images:
                     file_name_stack = "{}/{}_sr_{}{}".format(
-                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
-                    file_merged = "{}/{}_sr{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                        image.path, image.base_name,
+                        "{}", TrainTask.STACK_SUFFIX)
+                    file_merged = "{}/{}_sr{}".format(
+                        image.path, image.base_name, MERGED_SUFFIX)
                     files = [file_merged]
                     for feature in self.features:
-                        files.append(feature.file_format.format(file_merged[:-4]))
+                        files.append(
+                            feature.file_format.format(file_merged[:-4]))
                     # add textures
                     if self.include_textures_image:
                         files.append(image.extra_features)
                     if self.include_textures_places:
                         files.append(place.dem_textures_file_path)
-                    self.stack_features(place.vector_file_path[:-4]+".tif", files, file_name_stack)
+                    self.stack_features(place.vector_file_path[:-4]+".tif",
+                        files, file_name_stack)
 
             self.check_classes(places)
             # Add samples to train
             for place in places:
                 for image in place.images:
                     file_name_stack = "{}/{}_sr_{}{}".format(
-                        image.path, image.base_name, "{}", TrainTask.STACK_SUFFIX)
+                        image.path, image.base_name,
+                        "{}", TrainTask.STACK_SUFFIX)
                     self.add_samples(file_name_stack)
 
+            # Defines to train with the whole set or if it has to be split
             if self.without_ratio:
                 self.classifier.fit(0.0)
             else:
                 self.classifier.fit(0.25)
 
             self.elapsed_time = time.time() - self.start_time
-            print("Finished training in {} seconds".format(str(self.elapsed_time)))
+            print("Finished training in {} seconds".format(
+                str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False

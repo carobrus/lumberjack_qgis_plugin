@@ -26,14 +26,18 @@ BAND_TOTAL = 7
 class PreProcessTask(QgsTask):
 
     def obtain_places(self, root_directory):
+        # Iterates through the root directory searching the files needed to
+        # do the processing.
+        # Creates an structure with the Place and Image data objects so it's
+        # easy to iterate, access files and improves readability
         places = []
         for place_directory in os.scandir(root_directory):
             if (place_directory.is_dir()):
                 place = Place(place_directory.path)
 
-                for image_directory_or_file in os.scandir(place.directory_path):
-                    if (image_directory_or_file.is_dir()):
-                        image_directory = str(image_directory_or_file.path)
+                for img_directory_or_file in os.scandir(place.directory_path):
+                    if (img_directory_or_file.is_dir()):
+                        image_directory = str(img_directory_or_file.path)
                         image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
                             image_subfile_path = str(image_subfile.path)
@@ -42,13 +46,16 @@ class PreProcessTask(QgsTask):
                             elif (image_subfile_path[-(len(TEXTURES_SUFFIX)):] == TEXTURES_SUFFIX):
                                 image.extra_features = image_subfile_path
                         place.images.append(image)
-                    elif (image_directory_or_file.is_file()):
-                        file_path = str(image_directory_or_file.path)
-                        if (file_path[-(len(EXTENSION_FILE_SUFFIX)):] == EXTENSION_FILE_SUFFIX):
+                    elif (img_directory_or_file.is_file()):
+                        file_path = str(img_directory_or_file.path)
+                        if (file_path[-(len(EXTENSION_FILE_SUFFIX)):] ==
+                                EXTENSION_FILE_SUFFIX):
                             place.extension_file_path = file_path
-                        elif (file_path[-(len(DEM_TEXTURES_SUFFIX)):] == DEM_TEXTURES_SUFFIX):
+                        elif (file_path[-(len(DEM_TEXTURES_SUFFIX)):] ==
+                                DEM_TEXTURES_SUFFIX):
                             place.dem_textures_file_path = file_path
-                        elif (file_path[-(len(SHAPEFILE_SUFFIX)):] == SHAPEFILE_SUFFIX):
+                        elif (file_path[-(len(SHAPEFILE_SUFFIX)):] ==
+                                SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
                         elif (file_path[-(len(MASK_SUFFIX)):] == MASK_SUFFIX):
                             place.mask = file_path
@@ -66,11 +73,13 @@ class PreProcessTask(QgsTask):
         return minx, maxy, maxx, miny
 
 
-    def crop_images(self, file_name_band, file_name_crop, minx, maxy, maxx, miny):
+    def crop_images(self, file_name_band, file_name_crop,
+                    minx, maxy, maxx, miny):
         # Crops all images according to the extension.
         for i in range(1, BAND_TOTAL+1):
             # Crop image to extension
-            command_translate = "gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}\" \"{}\""
+            command_translate = ("gdal_translate -projwin {} {} {} {} "
+                                 "-ot Int16 -of GTiff \"{}\" \"{}\"")
             subprocess.call(command_translate.format(
                 minx, maxy, maxx, miny, file_name_band.format(i),
                 file_name_crop.format(i)), stdout=open(os.devnull, 'wb'),
@@ -123,13 +132,16 @@ class PreProcessTask(QgsTask):
                 file_name_merged = "{}/{}_sr{}".format(
                     image.path, image.base_name, MERGED_SUFFIX)
 
+                # Crop all bands according to the extent file
                 self.crop_images(
                     file_name_band, file_name_crop, minx, maxy, maxx, miny)
 
+                # Merge all bands
                 files_to_merge = []
                 for i in range(1, BAND_TOTAL+1):
                     files_to_merge.append(file_name_crop.format(i))
-                self.merge_images(files_to_merge, file_name_merged, BAND_TOTAL, gdal.GDT_Int16)
+                self.merge_images(files_to_merge, file_name_merged,
+                                  BAND_TOTAL, gdal.GDT_Int16)
                 for file in files_to_merge:
                     if os.path.exists(file):
                         os.remove(file)
@@ -140,6 +152,7 @@ class PreProcessTask(QgsTask):
 
     def __init__(self, description, task):
         super().__init__(description, task)
+
 
     def run(self):
         """Here you implement your heavy lifting.

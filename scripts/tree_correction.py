@@ -8,11 +8,9 @@ import time
 from .. import Lumberjack
 
 
-
 class TreeCorrectionTask(QgsTask):
-
-
-    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount, smooth_it, lumberjack_instance):
+    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount,
+                 smooth_it, lumberjack_instance):
         super().__init__("Tree Correction",  QgsTask.CanCancel)
         self.dem = dem_file
         self.tree_mask = tree_mask_file
@@ -59,7 +57,8 @@ class TreeCorrectionTask(QgsTask):
             array_mask = np.array(array_mask - 1, dtype=bool)
             if self.dilate_amount != 0:
                 array_mask = np.invert(array_mask)
-                array_mask = ndimage.binary_dilation(array_mask, iterations=self.dilate_amount)
+                array_mask = ndimage.binary_dilation(
+                    array_mask, iterations=self.dilate_amount)
                 array_mask = np.invert(array_mask)
             # array_mask[array_mask==1] = 0
 
@@ -93,7 +92,7 @@ class TreeCorrectionTask(QgsTask):
             dataset_mask = None
 
             self.elapsed_time = time.time() - self.start_time
-            print("Finished training in {} seconds".format(str(self.elapsed_time)))
+            print("Finished in {} seconds".format(str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False

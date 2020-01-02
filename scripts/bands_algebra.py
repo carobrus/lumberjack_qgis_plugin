@@ -7,7 +7,7 @@ import time
 def obtain_features(dataset, file_output):
     rasterCount = dataset.RasterCount
 
-    # Levanta todas las bandas en 'data'
+    # Read bands into data array
     data=[]
     for band in range(rasterCount):
         band += 1
@@ -19,35 +19,33 @@ def obtain_features(dataset, file_output):
     srcband.FlushCache()
     srcband = None
 
-    # Calcula media y std de cada pixel
+    # Calculate meand and std using numpy
     mean = np.mean(data, axis=0)
     std = np.std(data, axis=0)
 
-    # Obtiene la dimension de data, que es la dimension de la imagen
-    # y le da un formato nuevo a la matriz
+    # Obtain data dimension (the image dimension) and gives a new shape
     dim = np.shape(data)
     data = np.reshape(data,(rasterCount,dim[1]*dim[2]))
     print('Image dimension:', dim)
 
-    # Calcula la pendiente y ordenada al origen de la fitted line
+    # Calculates slope and intersection of the fitted line
     x = np.arange(1,rasterCount+1)
     A = np.vstack([x, np.ones(len(x))]).T
-    # We can rewrite the line equation as y = Ap, where A = [[x 1]] and p = [[m], [c]].
-    # Now use lstsq to solve for p:
+    # The line equation can be written as y = Ap, where A = [[x 1]] and
+    # p = [[m], [c]]. Then use lstsq to solve for p:
     m, c = np.linalg.lstsq(A,data, rcond=None)[0]
     m = np.reshape(m,(dim[1],dim[2]))
     c = np.reshape(c,(dim[1],dim[2]))
     data = None
 
-    # Escribe las 4 matrices (media, std, pendiente y ordenada el origen
-    # de ajuste lineal) en una imagen nueva
+    # Write the four arrays into the new image
     driver = gdal.GetDriverByName('GTiff')
     outRaster = driver.Create(file_output, dim[2], dim[1], 4, gdal.GDT_Float32)
     outRaster.SetGeoTransform(dataset.GetGeoTransform())#Edito la georeferencia
     outRaster.SetProjection(dataset.GetProjection())
-    #Por cada matriz escribo en una banda
+    # For each array, a band is written
     outband = outRaster.GetRasterBand(1)
-    outband.WriteArray(mean) #escribo la matriz en el raster
+    outband.WriteArray(mean)
     outband = outRaster.GetRasterBand(2)
     outband.WriteArray(std)
     outband = outRaster.GetRasterBand(3)
@@ -74,9 +72,12 @@ def generate_algebra_file(file_input, file_output):
 
 if __name__== "__main__":
     parser = ArgumentParser()
-    parser.add_argument("-i", "--input_file", dest="file_input",
-                        help="Input tiff file to perform filters", required=True)
-    parser.add_argument("-o", "--output_file", dest="file_output",
-                        help="Output tiff file to save the image filtered", required=True)
+    parser.add_argument(
+        "-i", "--input_file", dest="file_input",
+        help="Input tiff file to perform filters", required=True)
+    parser.add_argument(
+        "-o", "--output_file", dest="file_output",
+        help="Output tiff file to save the image filtered", required=True)
+
     args = parser.parse_args()
     generate_algebra_file(args.file_input, args.file_output)

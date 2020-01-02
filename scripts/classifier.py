@@ -23,8 +23,10 @@ class Classifier:
 
 
     def add_samples(self, samples_file, X_data, y_labels):
-        X = np.genfromtxt(samples_file.format("X"), delimiter=',', dtype=np.float32)
-        y = np.genfromtxt(samples_file.format("y"), delimiter=',', dtype=np.float32)
+        X = np.genfromtxt(
+            samples_file.format("X"), delimiter=',', dtype=np.float32)
+        y = np.genfromtxt(
+            samples_file.format("y"), delimiter=',', dtype=np.float32)
 
         if (y_labels is None):
             X_data = X
@@ -51,14 +53,13 @@ class Classifier:
 
     def fit(self, test_size):
         if (test_size != 0):
-            self.__X_train, self.__X_test, self.__y_train, self.__y_test = train_test_split(
-                self.__X_train, self.__y_train, test_size=test_size)
-
-        print("X_train matrix is sized: {size}".format(size=self.__X_train.shape))
-        print("y_train array is sized: {size}".format(size=self.__y_train.shape))
+            self.__X_train, self.__X_test, self.__y_train, self.__y_test = (
+                train_test_split(self.__X_train, self.__y_train,
+                                 test_size=test_size))
 
         # Initializes model with n_estimators trees
-        # self.__rf = RandomForestClassifier(n_estimators=500, oob_score=True, n_jobs=-1)
+        # self.__rf = RandomForestClassifier(
+        #   n_estimators=500, oob_score=True, n_jobs=-1)
         self.__rf = RandomForestClassifier(n_estimators=100, bootstrap=False)
 
         print("Fitting model to training data...")
@@ -67,28 +68,20 @@ class Classifier:
 
 
     def calculate_metrics(self):
-        output = []
+        out = []
         y_pred = self.__rf.predict(self.__X_test)
-
-        print("X_test matrix is sized: {size}".format(size=self.__X_test.shape))
-        print("y_test array is sized: {size}".format(size=self.__y_test.shape))
 
         c_matrix = confusion_matrix(self.__y_test, y_pred, labels=[1,2])
 
-        output.append("Confusion Matrix: ")
-        output.append(c_matrix)
-        output.append("Accuracy:     " + str(accuracy_score(self.__y_test, y_pred)))
-        output.append("Precision:    " + str(precision_score(self.__y_test, y_pred)))
-        output.append("Recall Score: " + str(recall_score(self.__y_test, y_pred)))
-        output.append("F1 Score:     " + str(f1_score(self.__y_test, y_pred)))
+        out.append("Confusion Matrix: ")
+        out.append(c_matrix)
+        out.append("Accuracy:  " + str(accuracy_score(self.__y_test, y_pred)))
+        out.append("Precision: " + str(precision_score(self.__y_test, y_pred)))
+        out.append("Recall:    " + str(recall_score(self.__y_test, y_pred)))
+        out.append("F1 Score:  " + str(f1_score(self.__y_test, y_pred)))
 
-        for i in output:
-            print(i)
-        for index, imp in enumerate(self.__rf.feature_importances_):
-            print('Feature {:>4} importance: {}'.format(index+1, imp))
-
-        output.append(self.__rf.feature_importances_)
-        return output
+        out.append(self.__rf.feature_importances_)
+        return out
 
 
     def predict_an_image(self, input_image, output_image):
@@ -103,7 +96,8 @@ class Classifier:
 
         new_shape = (img_to_predict.shape[0] * img_to_predict.shape[1],
             img_to_predict.shape[2])
-        img_as_array = img_to_predict[:, :, :dataset.RasterCount].reshape(new_shape)
+        img_as_array = (
+            img_to_predict[:, :, :dataset.RasterCount].reshape(new_shape))
         print('Reshaped from {old_shape} to {new_shape}'.format(
             old_shape=img_to_predict.shape, new_shape=img_as_array.shape))
 
@@ -112,13 +106,15 @@ class Classifier:
         class_prediction = self.__rf.predict(img_as_array)
 
         # Reshape classification map
-        class_prediction = class_prediction.reshape(img_to_predict[:, :, 0].shape)
+        class_prediction = (
+            class_prediction.reshape(img_to_predict[:, :, 0].shape))
 
         # Create the result tiff
         print("Creating output image...")
         memory_driver = gdal.GetDriverByName('GTiff')
         out_raster_ds = memory_driver.Create(
-            output_image, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Byte)
+            output_image, dataset.RasterXSize,
+            dataset.RasterYSize, 1, gdal.GDT_Byte)
         out_raster_ds.SetProjection(dataset.GetProjectionRef())
         out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
         outband = out_raster_ds.GetRasterBand(1)
@@ -128,10 +124,12 @@ class Classifier:
 
 
     def export_classifier(self, pkl_filename):
+        # Creates a new file that stores the classifier
         with open(pkl_filename, 'wb') as file:
             pickle.dump(self.__rf, file)
 
 
     def import_classifier(self, pkl_filename):
+        # Loads a saved classifier
         with open(pkl_filename, 'rb') as file:
             self.__rf = pickle.load(file)

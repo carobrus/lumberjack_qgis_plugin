@@ -5,6 +5,7 @@ import datetime
 from .preprocess_task import *
 from .. import Lumberjack
 
+
 class CalculateFeaturesTask(PreProcessTask):
     def __init__(self, directory, features, include_textures_image,
                  include_textures_places, lumberjack_instance):
@@ -31,17 +32,21 @@ class CalculateFeaturesTask(PreProcessTask):
                 for image in place.images:
                     file_name_stack = "{}/{}_sr{}".format(
                         image.path, image.base_name, "_stack.tif")
-                    file_merged = "{}/{}_sr{}".format(image.path, image.base_name, MERGED_SUFFIX)
+                    file_merged = "{}/{}_sr{}".format(
+                        image.path, image.base_name, MERGED_SUFFIX)
                     files = [file_merged]
                     for feature in self.features:
-                        files.append(feature.file_format.format(file_merged[:-4]))
+                        files.append(
+                            feature.file_format.format(file_merged[:-4]))
                     # add textures
                     if self.include_textures_image:
                         files.append(image.extra_features)
                     if self.include_textures_places:
                         files.append(place.dem_textures_file_path)
                     self.total_features = self.calculate_total_features(files)
-                    self.merge_images(files, file_name_stack, self.total_features, gdal.GDT_Float32)
+                    self.merge_images(
+                        files, file_name_stack,
+                        self.total_features, gdal.GDT_Float32)
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished in {} seconds".format(str(self.elapsed_time)))
@@ -125,7 +130,8 @@ class SeasonalAnalysis(PreProcessTask):
         for place in places:
             if (place.mask != ""):
                 mask = gdal.Open(place.mask, gdal.GA_ReadOnly)
-                mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
+                mask_array = mask.GetRasterBand(1).ReadAsArray().astype(
+                    np.uint8)
 
                 stack_files = []
                 for image in place.images:
@@ -145,7 +151,6 @@ class SeasonalAnalysis(PreProcessTask):
                     print("Working on image of day: {}".format(number_of_day))
                     self.days.append(number_of_day)
                     self.data.append(band.ReadAsArray()[mask_array < 2])
-
 
 
     def run(self):

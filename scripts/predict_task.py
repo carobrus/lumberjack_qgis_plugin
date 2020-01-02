@@ -1,5 +1,6 @@
 from .preprocess_task import *
 
+
 class PredictTask(PreProcessTask):
     PREDICTION_SUFFIX = "_predic.tif"
     STACK_SUFFIX = "_stack.tif"
@@ -28,6 +29,7 @@ class PredictTask(PreProcessTask):
             self.output_files = []
             for place in places:
                 for image in place.images:
+                    # Create the output filename
                     file_name_stack = "{}/{}_sr{}".format(
                         image.path, image.base_name, PredictTask.STACK_SUFFIX)
                     time_stamp = self.start_time_str[:19]
@@ -35,11 +37,16 @@ class PredictTask(PreProcessTask):
                         image.path, image.base_name,
                         time_stamp.replace(" ", "_").replace(":","-"),
                         PredictTask.PREDICTION_SUFFIX)
+                    # Add the output file to array
                     self.output_files.append(output_file)
-                    self.classifier.predict_an_image(file_name_stack, output_file)
+
+                    # Predict the image with the classifier
+                    self.classifier.predict_an_image(
+                        file_name_stack, output_file)
 
             self.elapsed_time = time.time() - self.start_time
-            print("Finished training in {} seconds".format(str(self.elapsed_time)))
+            print("Finished training in {} seconds".format(
+                str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False
@@ -60,6 +67,8 @@ class PredictTask(PreProcessTask):
                     td=self.directory),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
 
+            # Return all the output files so they can be added (or not)
+            # to the QGIS canvas
             self.li.notify_prediction(
                 self.start_time_str, self.output_files, self.elapsed_time)
 

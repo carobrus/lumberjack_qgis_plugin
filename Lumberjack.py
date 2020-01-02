@@ -39,7 +39,8 @@ from .scripts.train_task import TrainTask
 from .scripts.test_task import TestTask
 from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
-from .scripts.features import AlgebraFeature, FilterFeature, FilterGaussFeature, NdviFeature, DayFeature
+from .scripts.features import AlgebraFeature, FilterFeature
+from .scripts.features import FilterGaussFeature, NdviFeature, DayFeature
 from .scripts.seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
 from .scripts.tree_correction import TreeCorrectionTask
 
@@ -48,10 +49,13 @@ import sys
 from .scripts.plot import PlotWindow
 from .scripts.plotbox import PlotWindow as PlotboxWindow
 
+
 MESSAGE_CATEGORY = 'Lumberjack'
+
 
 class Lumberjack:
     """QGIS Plugin Implementation."""
+
 
     def __init__(self, iface):
         """Constructor.
@@ -94,6 +98,7 @@ class Lumberjack:
         self.testing_ratio = None
         self.calculate_features_task = None
         self.tree_correction_task = None
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -182,8 +187,8 @@ class Lumberjack:
                 action)
 
         self.actions.append(action)
-
         return action
+
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -207,46 +212,60 @@ class Lumberjack:
                 action)
             self.iface.removeToolBarIcon(action)
 
+
     def select_training_directory(self):
         filename = QFileDialog.getExistingDirectory(
             self.dlg, "Select training directory","")
         self.dlg.lineEdit_trainingDirectory.setText(filename)
+
 
     def select_prediction_directory(self):
         filename = QFileDialog.getExistingDirectory(
             self.dlg, "Select prediction directory","")
         self.dlg.lineEdit_predictionDirectoy.setText(filename)
 
+
     def select_testing_directory(self):
         filename = QFileDialog.getExistingDirectory(
             self.dlg, "Select training directory","")
         self.dlg.lineEdit_testingDirectory.setText(filename)
+
 
     def select_seasonal_directory(self):
         filename = QFileDialog.getExistingDirectory(
             self.dlg, "Select directory","")
         self.dlg.lineEdit_directory_seasonal.setText(filename)
 
+
     def search_dem(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select dem","","*.tif; *.tiff")
+        filename = QFileDialog.getOpenFileName(
+            self.dlg, "Select dem","","*.tif; *.tiff")
         self.dlg.lineEdit_dem.setText(filename[0])
 
+
     def search_tree_mask(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select tree mask","","*.tif; *.tiff")
+        filename = QFileDialog.getOpenFileName(
+            self.dlg, "Select tree mask","","*.tif; *.tiff")
         self.dlg.lineEdit_tree_mask.setText(filename[0])
 
+
     def search_output_dem(self):
-        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","","*.tif; *.tiff")
+        filename = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","","*.tif; *.tiff")
         self.dlg.lineEdit_output_dem.setText(filename[0])
 
+
     def export_classifier(self):
-        filename = QFileDialog.getSaveFileName(self.dlg, "Save output file ","","*.pkl")
+        filename = QFileDialog.getSaveFileName(
+            self.dlg, "Save output file ","","*.pkl")
         file = filename[0]
         if file != "" :
             self.classifier.export_classifier(file)
 
+
     def import_classifier(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select input classifier file","","*.pkl")
+        filename = QFileDialog.getOpenFileName(
+            self.dlg, "Select input classifier file","","*.pkl")
         file = filename[0]
         if file != "" :
             self.classifier = Classifier()
@@ -254,10 +273,11 @@ class Lumberjack:
             self.dlg.pushButton_testing.setEnabled(True)
             self.dlg.pushButton_prediction.setEnabled(True)
 
+
     def run(self):
         """Run method that performs all the real work"""
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback,
+        # Create the dialog with elements (after translation) and keep
+        # reference. Only create GUI ONCE in callback,
         # so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
@@ -288,10 +308,13 @@ class Lumberjack:
                 self.plot_seasonal_analysis)
 
             self.dlg.pushButton_search_dem.clicked.connect(self.search_dem)
-            self.dlg.pushButton_search_tree_mask.clicked.connect(self.search_tree_mask)
-            self.dlg.pushButton_output_dem.clicked.connect(self.search_output_dem)
+            self.dlg.pushButton_search_tree_mask.clicked.connect(
+                self.search_tree_mask)
+            self.dlg.pushButton_output_dem.clicked.connect(
+                self.search_output_dem)
 
-            self.dlg.pushButton_correct_trees.clicked.connect(self.correct_trees)
+            self.dlg.pushButton_correct_trees.clicked.connect(
+                self.correct_trees)
 
             self.dlg.pushButton_export.clicked.connect(self.export_classifier)
             self.dlg.pushButton_import.clicked.connect(self.import_classifier)
@@ -314,13 +337,17 @@ class Lumberjack:
 
 
     def notify_tree_correction(self, start_time, output_file, time):
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished tree correction in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished tree correction in {} seconds".format(str(time)))
         if self.dlg.checkBox_add_dem.isChecked():
             file_name = output_file.split("/")[-1]
             self.iface.addRasterLayer(output_file, file_name)
             layers = QgsProject.instance().mapLayersByName(file_name)
-        self.iface.messageBar().pushMessage("Success", "Output file {} created".format(file_name), level=Qgis.Success, duration=5)
+        self.iface.messageBar().pushMessage(
+            "Success", "Output file {} created".format(file_name),
+            level=Qgis.Success, duration=5)
 
 
     def calculate_features(self):
@@ -356,16 +383,20 @@ class Lumberjack:
 
     def notify_calculate_features(self, start_time, range, time):
         self.dlg.spinBox_feature.setRange(1, range)
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished features in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished features in {} seconds".format(str(time)))
         self.dlg.pushButton_boxplot.setEnabled(True)
         # self.dlg.open()
 
 
     def notify_seasonal_analysis(self, start_time, data, days, time):
         self.dlg.open()
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished in {} seconds".format(str(time)))
         self.plotboxWindow = PlotboxWindow(self.dlg, data=data, days=days)
         self.plotboxWindow.show()
 
@@ -438,7 +469,6 @@ class Lumberjack:
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
 
-
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_predictionDirectoy.text(),
             features = self.features,
@@ -451,33 +481,40 @@ class Lumberjack:
             classifier = self.classifier,
             lumberjack_instance = self)
 
-        self.predict_task.addSubTask(self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
+        self.predict_task.addSubTask(
+            self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
         QgsApplication.taskManager().addTask(self.predict_task)
 
 
     def notify_training(self, start_time, classes, total_samples, time):
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText("Classes when training:")
         for i in classes:
             self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-        self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
-        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Total samples: {}".format(str(total_samples)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished in {} seconds".format(str(time)))
         self.dlg.plainTextEdit.appendPlainText("")
-
         self.dlg.open()
 
 
-    def notify_testing(self, start_time, classes, total_samples, metrics, time):
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
+    def notify_testing(self, start_time, classes,
+                       total_samples, metrics, time):
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
         if (not classes is None):
             self.dlg.plainTextEdit.appendPlainText("Classes when testing:")
             for i in classes:
                 self.dlg.plainTextEdit.appendPlainText("- " + str(i))
-        self.dlg.plainTextEdit.appendPlainText("Total samples: {}".format(str(total_samples)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Total samples: {}".format(str(total_samples)))
 
         for i in metrics[:-1]:
             self.dlg.plainTextEdit.appendPlainText(str(i))
-        self.dlg.plainTextEdit.appendPlainText("Finished in {} seconds".format(str(time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished in {} seconds".format(str(time)))
         self.dlg.plainTextEdit.appendPlainText("")
 
         self.dlg.open()
@@ -488,9 +525,12 @@ class Lumberjack:
 
 
     def notify_prediction(self, start_time, output_files, time):
-        self.dlg.plainTextEdit.appendPlainText("======== {} ========".format(str(start_time)))
-        self.dlg.plainTextEdit.appendPlainText("Finished prediction in {} seconds".format(str(time)))
-        self.iface.messageBar().pushMessage("Success", "Output file/s created", level=Qgis.Success, duration=5)
+        self.dlg.plainTextEdit.appendPlainText(
+            "======== {} ========".format(str(start_time)))
+        self.dlg.plainTextEdit.appendPlainText(
+            "Finished prediction in {} seconds".format(str(time)))
+        self.iface.messageBar().pushMessage(
+            "Success", "Output file/s created", level=Qgis.Success, duration=5)
         if self.dlg.checkBox_addFile.isChecked():
             for file_path in output_files:
                 file_name = file_path.split("/")[-1]
@@ -498,4 +538,5 @@ class Lumberjack:
                 layers = QgsProject.instance().mapLayersByName(file_name)
                 abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
                 layers[0].loadNamedStyle(abs_style_path)
-                self.iface.layerTreeView().refreshLayerSymbology(layers[0].id())
+                self.iface.layerTreeView().refreshLayerSymbology(
+                    layers[0].id())
