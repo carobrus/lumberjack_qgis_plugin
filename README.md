@@ -1,6 +1,6 @@
 # Lumberjack <img align="right" width="45" height="45" src="icon.png" alt="Lumberjack icon">
 
-A qgis plugin to calculate features of images, classify and remove trees out of elevation maps
+A QGIS plugin to calculate features of images, classify and remove trees out of elevation maps
 
 <!-- ## Getting Started
 
@@ -11,9 +11,10 @@ These instructions will get you a copy of the project up and running on your loc
 
 <!--- What things you need to install the software and how to install them -->
 * [QGIS Desktop 3 with GRASS](https://www.qgis.org/) - A Free and Open Source Geographic Information System
-* Python 3
-* scipy
-* numpy
+* [Python 3](https://www.python.org/)
+* [NumPy](https://numpy.org/)
+* [SciPy](https://www.scipy.org/)
+* [scikit-learn](https://scikit-learn.org/stable/)
 
 <!-- ```
 Give examples
@@ -27,10 +28,10 @@ py3_env.bat
 pip install *name-of-library*
 ```
 
-## Installation
+### Installation
 
-You can download the repository and add it along with the other python plugins. By default this is located in:
-`C:\OSGeo4W64\apps\qgis\python\plugins` <br/>&nbsp;&nbsp;&nbsp;&nbsp;
+You can download the repository and add it along with the other python plugins. By default this may be located in:
+`C:\OSGeo4W64\apps\qgis\python\plugins` <br/>
 If you are not sure about the location, you can:
 * Download the repository as a .zip.
 * In QGIS go to *Plugins > Manage and Install Plugins > Install from ZIP* and browse the .zip file.
@@ -40,54 +41,99 @@ After this, you should be able to see the plugin among the installed ones.
 
 > Do not forget to activate the plugin selecting the checkbox at *Plugins > Manage and Install Plugins > All*. You should be able to see the plugin at the plugins menu ( <kbd>alt</kbd> + <kbd>p</kbd> ).
 
+### A quick glance at a result
 
-## How to Use
-...
+![](images/example_input.png)|![](images/example_output.png)
+:-------------------------------:|:-------------------------------:
+Before |  After
 
-Directories have to keep certain a format. Each directory hold folders with places. Each place should have a .tiff file defining the extension to process and the Landsat 8 images as downloaded from USGS. Also, each place might have features to apply to that place (e.g. textures of the DEM).<br/>&nbsp;&nbsp;&nbsp;&nbsp;
-If additional features are intended to be consider for an image, each image folder has to contain a file with the same suffix.<br/>&nbsp;&nbsp;&nbsp;&nbsp;
-An example directory:
+### How to Use
 
-```
-C:\USERS\USER\DOCUMENTS\TRAINING
-├───GralVillegas
-│   │   demGralVillegasRescale-textures.tif
-│   │   GralVillegas-ext.tif
+<!-- <img align="left" width="45" height="45" src="images/lumberjack_view_a.jpg" alt="Lumberjack View a">
+<img align="left" width="45" height="45" src="images/lumberjack_view_b.jpg" alt="Lumberjack View b">
+<img align="left" width="45" height="45" src="images/lumberjack_view_c.jpg" alt="Lumberjack View c"> -->
+
+The plugin has the three views shown below:
+
+![](images/lumberjack_view_a.jpg)|![](images/lumberjack_view_b.jpg)|![](images/lumberjack_view_c.jpg)
+:-------------------------------:|:-------------------------------:|:-------------------------------:
+Classification |  Threshold Analysis | Tree Correction
+
+The Classification view lets train and test a Random Forest classifier, and predict where trees may be located generating a mask. It also lets save and load classifiers. The Threshold Analysis view lets make an analysis of how different features may vary along time. The Tree Correction view, given an input DEM and a mask, removes trees from a DEM. The plain text edit at the bottom of the window informs metrics. Also, testing generates a bar chart with the feature importances.
+
+![](images/feature_importances.jpg)|![](images/seasonal_analysis.jpg)
+:-------------------------------:|:-------------------------------:
+Feature Importances |  Threshold Analysis of NDVI
+
+In order to automate the processing of the images, directories have to keep certain a format. Each directory hold folders with places. Each place should have a GeoTIFF file defining the extent and folders with the Landsat 8 images as downloaded from USGS. Also, each DEM or Landsat image may have texture features to apply to that place (these can be obtained with the GRASS Script on this repository).<br/>&nbsp;&nbsp;&nbsp;&nbsp;
+The basic format looks like:
+
+<pre><code>directory
+├───place1
+│   │   place1<b>_dem.tif</b>
+│   │   place1<b>_dem_text.tif</b>
+│   │   place1<b>_reg.tif</b>
 │   │   ...
-│   │   GralVillegas_roi.shp
-│   │   GralVillegas_roi.shx
+│   │   place1<b>_roi.shp</b>
+│   │   ...
+│   │   LC08_L1TP_PPPRRR_YYYYMMDD_yyyymmdd_CC_T1<b>_mask.tif</b>
 │   │
-│   ├───LC082280842017113001T1-SC20190815123416
-│   │       LC08_L1TP_228084_20171130_20171207_01_T1.xml
-│   │       LC08_L1TP_228084_20171130_20171207_01_T1_ANG.txt
-│   │       LC08_L1TP_228084_20171130_20171207_01_T1_MTL.txt
+│   ├───LC08_L1TP_PPPRRR_YYYYMMDD_yyyymmdd_CC_T1
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1.xml</b>
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_ANG.txt</b>
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_MTL.txt</b>
 │   │       ...
-│   │       LC08_L1TP_228084_20171130_20171207_01_T1_sr_band7.tif
-│   │       LC08_L1TP_228084_20171130_20171207_01_T1_text.tif
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band1.tif</b>
+│   │       ...
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band7.tif</b>
+│   │       <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_text.tif</b>
 │   │
-│   └───LC082280842019071501T1-SC20190815133929
-│           LC08_L1TP_228084_20190715_20190721_01_T1.xml
-│           LC08_L1TP_228084_20190715_20190721_01_T1_ANG.txt
-│           LC08_L1TP_228084_20190715_20190721_01_T1_MTL.txt
+│   └───LC08_L1TP_PPPRRR_YYYYMMDD_yyyymmdd_CC_T1
+│           <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1.xml</b>
 │           ...
-│           LC08_L1TP_228084_20190715_20190721_01_T1_sr_band7.tif
-│           LC08_L1TP_228084_20190715_20190721_01_T1_text.tif
-│
-└───LasFlores
-    │   demLasFloresRescale-textures.tif
-    │   LasFlores-ext.tif
+│           <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band1.tif</b>
+│           ...
+│           <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band7.tif</b>
+│           <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_text.tif</b>
+├───...
+└───placeN
+    │   placeN<b>_dem.tif</b>
+    │   placeN<b>_dem_text.tif</b>
+    │   placeN<b>_reg.tif</b>
     │   ...
-    │   LasFlores_roi.shp
-    │   LasFlores_roi.shx
+    │   placeN<b>_roi.shp</b>
+    │   ...
+    │   LC08_L1TP_PPPRRR_YYYYMMDD_yyyymmdd_CC_T1<b>_mask.tif</b>
     │
-    └───LC082250852017082101T1-SC20190815115812
-            LC08_L1TP_225085_20170821_20170911_01_T1.xml
-            LC08_L1TP_225085_20170821_20170911_01_T1_ANG.txt
-            LC08_L1TP_225085_20170821_20170911_01_T1_MTL.txt
+    └───LC08_L1TP_PPPRRR_YYYYMMDD_yyyymmdd_CC_T1
+            <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1.xml</b>
             ...
-            LC08_L1TP_225085_20170821_20170911_01_T1_sr_band7.tif
-            LC08_L1TP_225085_20170821_20170911_01_T1_text.tif
-```
+            <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band1.tif</b>
+            ...
+            <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_sr_band7.tif</b>
+            <b>LC08_L1TP_</b>PPPRRR_YYYYMMDD_yyyymmdd_CC<b>_T1_text.tif</b> </code> </pre>
+
+The files are:
+* ***_sr_bandn.tif**: Each band of the Landsat 8 image is necessary to process the surface reflectance.
+* ***_MTL.txt**: This file holds the metadata and lets extract a bit of information about the image.
+* ***_reg.tif**: Defines the extent to be used when processing the image. The extent is extracted from the GeoTIFF file.
+* ***_dem.tif**: In case textures of the DEM want to be considered, this GeoTIFF is the Digital Elevation Model of a place.
+* ***_roi.shp**: This Shapefile defines tree and non-tree polygons. Some examples are located in the _rois_ folder.
+* ***_mask.tif**: A GeoTIFF which is usually the result of a prediction and defines if pixels are tree or non-tree pixels.
+* ***_text.tif**: This GeoTIFFs are generated with the GRASS script for DEMs and Landsat GeoTIFF files. This files may be used as features.
+
+The table below defines which files are necessary for which task:
+
+|                    |  *_sr_bandn.tif  | *_MTL.txt | *_reg.tif | *_dem.tif | *_roi.shp | *_mask.tif | *_text.tif |
+|--------------------|:----------------:|:---------:|:---------:|:---------:|:---------:|:----------:|:----------:|
+| Landsat Textures   |         Y        |           |     Y     |           |           |            |            |
+| DEM Textures       |                  |     Y     |           |     Y     |           |            |            |
+| Training           |         Y        |     Y     |     Y     |           |     Y     |            |     Y/N    |
+| Testing            |         Y        |     Y     |     Y     |           |     Y     |            |     Y/N    |
+| Predicting         |         Y        |     Y     |     Y     |           |           |            |     Y/N    |
+| Threshold Analysis |         Y        |     Y     |     Y     |           |           |      Y     |     Y/N    |
+
+
 
 <!-- # Lumberjack ![alt text](https://github.com/carobrus/qgis_python_plugin/blob/master/icon.jpg) -->
 
