@@ -20,6 +20,7 @@ class Classifier:
         self.__X_test = None
         self.__y_test = None
         self.__rf = None
+        self.feature_names = []
 
 
     def add_samples(self, samples_file, X_data, y_labels):
@@ -80,8 +81,11 @@ class Classifier:
         out.append("Recall:    " + str(recall_score(self.__y_test, y_pred)))
         out.append("F1 Score:  " + str(f1_score(self.__y_test, y_pred)))
 
-        out.append(self.__rf.feature_importances_)
+        # out.append(self.__rf.feature_importances_)
         return out
+
+    def get_feature_importances(self):
+        return self.__rf.feature_importances_
 
 
     def predict_an_image(self, input_image, output_image):

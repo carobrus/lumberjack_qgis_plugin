@@ -63,6 +63,7 @@ def generate_filter_file(file_input, file_output_median=None,
     print("Performing filters...")
     # Opens the gdal dataset
     dataset = gdal.Open(file_input, gdal.GA_ReadOnly)
+    band_count = dataset.RasterCount
 
     if file_output_median != None:
         median_img = median_filter(dataset, window_size)
@@ -74,6 +75,8 @@ def generate_filter_file(file_input, file_output_median=None,
 
     elapsed_time = time.time() - start_time
     print("Finished filtering in " + str(elapsed_time) + " seconds")
+
+    return band_count
 
 
 def check_positive(value):

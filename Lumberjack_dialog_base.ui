@@ -302,6 +302,13 @@
              </spacer>
             </item>
             <item>
+             <widget class="QPushButton" name="pushButton_feature_importances">
+              <property name="text">
+               <string>Feature Importances</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="pushButton_testing">
               <property name="enabled">
                <bool>false</bool>

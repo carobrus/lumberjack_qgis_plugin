@@ -98,6 +98,7 @@ class Lumberjack:
         self.testing_ratio = None
         self.calculate_features_task = None
         self.tree_correction_task = None
+        self.feature_importances = None
 
 
     # noinspection PyMethodMayBeStatic
@@ -274,6 +275,13 @@ class Lumberjack:
             self.dlg.pushButton_prediction.setEnabled(True)
 
 
+    def graph_feature_importances(self):
+        # Barchart window with feature importances
+        self.plotWindow = PlotWindow(self.dlg,
+            feature_importances=self.classifier.get_feature_importances())
+        self.plotWindow.show()
+
+
     def run(self):
         """Run method that performs all the real work"""
         # Create the dialog with elements (after translation) and keep
@@ -320,6 +328,9 @@ class Lumberjack:
             self.dlg.pushButton_import.clicked.connect(self.import_classifier)
 
             self.dlg.tabWidget.setCurrentIndex(0)
+
+            self.dlg.pushButton_feature_importances.clicked.connect(
+                self.graph_feature_importances)
 
         self.dlg.open()
 
@@ -511,17 +522,13 @@ class Lumberjack:
         self.dlg.plainTextEdit.appendPlainText(
             "Total samples: {}".format(str(total_samples)))
 
-        for i in metrics[:-1]:
+        for i in metrics:
             self.dlg.plainTextEdit.appendPlainText(str(i))
         self.dlg.plainTextEdit.appendPlainText(
             "Finished in {} seconds".format(str(time)))
         self.dlg.plainTextEdit.appendPlainText("")
 
         self.dlg.open()
-
-        # Barchart window with feature importances
-        self.plotWindow = PlotWindow(self.dlg, feature_importances=metrics[-1])
-        self.plotWindow.show()
 
 
     def notify_prediction(self, start_time, output_files, time):

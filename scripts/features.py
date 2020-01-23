@@ -21,6 +21,7 @@ class Feature:
     # Parent class which defines a common interface for all features
     def __init__(self):
         self.file_format = ""
+        self.feature_names = []
 
 
     def execute(self, file_in):
@@ -31,6 +32,7 @@ class AlgebraFeature(Feature):
     def __init__(self):
         super().__init__()
         self.file_format = "{}{}".format("{}", ALGEBRA_SUFFIX)
+        self.feature_names = ["mean", "std", "slope", "intercept"]
 
 
     def execute(self, file_in):
@@ -43,11 +45,12 @@ class FilterFeature(Feature):
         super().__init__()
         self.file_format = "{}{}".format("{}", FILTER_SUFFIX)
 
-
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
-        filters.generate_filter_file(
+        band_count = filters.generate_filter_file(
             file_input=file_in, file_output_median=file_out)
+        self.feature_names = (
+            ["median_filt_band{}".format(i) for i in range(1, band_count+1)])
 
 
 class FilterGaussFeature(Feature):
@@ -58,15 +61,16 @@ class FilterGaussFeature(Feature):
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
-        filters.generate_filter_file(
+        band_count = filters.generate_filter_file(
             file_input=file_in, file_output_gaussian=file_out)
-
+        self.feature_names = (
+            ["gauss_filt_band{}".format(i) for i in range(1, band_count+1)])
 
 class NdviFeature(Feature):
     def __init__(self):
         super().__init__()
         self.file_format = "{}{}".format("{}", NDVI_SUFFIX)
-
+        self.feature_names = ["ndvi"]
 
     def execute(self, file_in):
         file_out = self.file_format.format(file_in[:-4])
@@ -77,6 +81,7 @@ class DayFeature(Feature):
     def __init__(self):
         super().__init__()
         self.file_format = "{}{}".format("{}", DAY_SUFFIX)
+        self.feature_names = ["day_normalized", "day_transform"]
 
 
     def execute(self, file_in):
