@@ -97,57 +97,78 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QCheckBox" name="checkBox_bandsAlgebra">
-            <property name="text">
-             <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBox_medianFilter">
-            <property name="text">
-             <string>Median and Gaussian Filter</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBox_ndvi">
-            <property name="text">
-             <string>NDVI</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBox_textures">
-            <property name="text">
-             <string>Textures</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBox_dem">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string>DEM Textures</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_features">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_13">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="checkBox_bandsAlgebra">
+                <property name="text">
+                 <string>Bands Algebra (mean, std, fitted line slope and intercept)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_medianFilter">
+                <property name="text">
+                 <string>Median and Gaussian Filter</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_ndvi">
+                <property name="text">
+                 <string>NDVI</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_textures">
+                <property name="text">
+                 <string>Textures</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_dem">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>DEM Textures</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item alignment="Qt::AlignBottom">
+             <widget class="QPushButton" name="pushButton_feature_importances">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Feature Importances</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -300,13 +321,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_feature_importances">
-              <property name="text">
-               <string>Feature Importances</string>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_testing">
@@ -696,11 +710,6 @@
  <tabstops>
   <tabstop>pushButton_import</tabstop>
   <tabstop>pushButton_export</tabstop>
-  <tabstop>checkBox_bandsAlgebra</tabstop>
-  <tabstop>checkBox_medianFilter</tabstop>
-  <tabstop>checkBox_ndvi</tabstop>
-  <tabstop>checkBox_textures</tabstop>
-  <tabstop>checkBox_dem</tabstop>
   <tabstop>lineEdit_trainingDirectory</tabstop>
   <tabstop>pushButton_trainingDirectory</tabstop>
   <tabstop>checkBox_testing_ratio</tabstop>

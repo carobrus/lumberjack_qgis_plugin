@@ -23,12 +23,7 @@ class Classifier:
         self.feature_names = []
 
 
-    def add_samples(self, samples_file, X_data, y_labels):
-        X = np.genfromtxt(
-            samples_file.format("X"), delimiter=',', dtype=np.float32)
-        y = np.genfromtxt(
-            samples_file.format("y"), delimiter=',', dtype=np.float32)
-
+    def add_samples(self, X, y, X_data, y_labels):
         if (y_labels is None):
             X_data = X
             y_labels = y
@@ -38,14 +33,14 @@ class Classifier:
         return X_data, y_labels
 
 
-    def add_testing_samples(self, samples_file):
+    def add_testing_samples(self,  X, y):
         self.__X_test, self.__y_test = self.add_samples(
-            samples_file, self.__X_test, self.__y_test)
+            X, y, self.__X_test, self.__y_test)
 
 
-    def add_training_samples(self, samples_file):
+    def add_training_samples(self, X, y):
         self.__X_train, self.__y_train = self.add_samples(
-            samples_file, self.__X_train, self.__y_train)
+            X, y, self.__X_train, self.__y_train)
 
 
     def get_test_size(self):

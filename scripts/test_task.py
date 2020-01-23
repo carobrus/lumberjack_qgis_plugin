@@ -3,24 +3,19 @@ from .classification_task import *
 from .train_task import TrainTask
 
 class TestTask(ClassificationTask):
-    def __init__(self, directory, features,
-                 classifier, testing_ratio, include_textures_image,
-                 include_textures_places, lumberjack_instance):
+    def __init__(self, directory, classifier, testing_ratio,
+                 lumberjack_instance):
         super().__init__("Lumberjack testing", QgsTask.CanCancel)
         self.directory = directory
-        self.features = features
         self.classifier = classifier
         self.without_ratio = testing_ratio
-        self.include_textures_image = include_textures_image
-        self.include_textures_places = include_textures_places
         self.li = lumberjack_instance
         self.classes = None
         self.exception = None
 
 
-    def add_samples(self, file_name_stack):
-        # Adds samples to the classifier for testing it
-        self.classifier.add_testing_samples(file_name_stack)
+    def add_samples(self, X, y):
+        self.classifier.add_testing_samples(X, y)
 
 
     def run(self):
@@ -36,36 +31,10 @@ class TestTask(ClassificationTask):
                 places = self.obtain_places(self.directory)
 
                 self.rasterize_vector_files(places)
-                self.pre_process_images(places)
-
-                for place in places:
-                    for image in place.images:
-                        file_name_stack = "{}/{}_sr_{}{}".format(
-                            image.path, image.base_name, "{}",
-                            TrainTask.STACK_SUFFIX)
-                        file_merged = "{}/{}_sr{}".format(
-                            image.path, image.base_name, MERGED_SUFFIX)
-                        files = [file_merged]
-                        for feature in self.features:
-                            files.append(
-                                feature.file_format.format(file_merged[:-4]))
-                        # add textures
-                        if self.include_textures_image:
-                            files.append(image.extra_features)
-                        if self.include_textures_places:
-                            files.append(place.dem_textures_file_path)
-                        self.stack_features(
-                            place.vector_file_path[:-4]+".tif",
-                            files, file_name_stack)
 
                 self.check_classes(places)
-                # Add samples to train
-                for place in places:
-                    for image in place.images:
-                        file_name_stack = "{}/{}_sr_{}{}".format(
-                            image.path, image.base_name,
-                            "{}", TrainTask.STACK_SUFFIX)
-                        self.add_samples(file_name_stack)
+                self.filter_samples(places)
+
             else:
                 # No samples are added
                 self.total_samples = self.classifier.get_test_size()

@@ -41,7 +41,8 @@ from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
 from .scripts.features import AlgebraFeature, FilterFeature
 from .scripts.features import FilterGaussFeature, NdviFeature, DayFeature
-from .scripts.seasonal_analysis import CalculateFeaturesTask, SeasonalAnalysis
+from .scripts.seasonal_analysis import SeasonalAnalysis
+from .scripts.calculate_features_task import CalculateFeaturesTask
 from .scripts.tree_correction import TreeCorrectionTask
 
 import sys
@@ -271,6 +272,7 @@ class Lumberjack:
         if file != "" :
             self.classifier = Classifier()
             self.classifier.import_classifier(file)
+            self.dlg.pushButton_feature_importances.setEnabled(True)
             self.dlg.pushButton_testing.setEnabled(True)
             self.dlg.pushButton_prediction.setEnabled(True)
 
@@ -425,19 +427,27 @@ class Lumberjack:
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
 
+        self.calculate_features_task = CalculateFeaturesTask(
+            directory = self.dlg.lineEdit_trainingDirectory.text(),
+            features = self.features,
+            include_textures_image = self.dlg.checkBox_textures.isChecked(),
+            include_textures_places = self.dlg.checkBox_dem.isChecked(),
+            lumberjack_instance = self)
+
         self.classifier = Classifier()
         self.testing_ratio = self.dlg.checkBox_testing_ratio.isChecked()
 
         self.train_task = TrainTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
-            features = self.features,
             classifier = self.classifier,
             testing_ratio = self.testing_ratio,
-            include_textures_image = self.dlg.checkBox_textures.isChecked(),
-            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
+
+        self.train_task.addSubTask(
+            self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
         QgsApplication.taskManager().addTask(self.train_task)
 
+        self.dlg.pushButton_feature_importances.setEnabled(True)
         self.dlg.pushButton_testing.setEnabled(True)
         self.dlg.pushButton_prediction.setEnabled(True)
         self.dlg.pushButton_export.setEnabled(True)
@@ -456,14 +466,21 @@ class Lumberjack:
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
 
-        self.test_task = TestTask(
+        self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_testingDirectory.text(),
             features = self.features,
-            classifier = self.classifier,
-            testing_ratio = self.testing_ratio,
             include_textures_image = self.dlg.checkBox_textures.isChecked(),
             include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
+
+        self.test_task = TestTask(
+            directory = self.dlg.lineEdit_testingDirectory.text(),
+            classifier = self.classifier,
+            testing_ratio = self.testing_ratio,
+            lumberjack_instance = self)
+
+        self.test_task.addSubTask(
+            self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
         QgsApplication.taskManager().addTask(self.test_task)
 
 
