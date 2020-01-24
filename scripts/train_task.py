@@ -4,11 +4,12 @@ from .classification_task import *
 
 class TrainTask(ClassificationTask):
     def __init__(self, directory, classifier,
-                 testing_ratio, lumberjack_instance):
+                 testing_ratio, features, lumberjack_instance):
         super().__init__("Lumberjack training", QgsTask.CanCancel)
         self.directory = directory
         self.classifier = classifier
         self.without_ratio = testing_ratio
+        self.features = features
         self.li = lumberjack_instance
         self.classes = None
         self.exception = None
@@ -34,6 +35,9 @@ class TrainTask(ClassificationTask):
 
             # Add samples to train
             self.filter_samples(places)
+
+            for feature in self.features:
+                self.classifier.add_feature_names(feature.feature_names)
 
             # Defines to train with the whole set or if it has to be split
             if self.without_ratio:

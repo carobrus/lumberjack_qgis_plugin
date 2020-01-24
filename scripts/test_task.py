@@ -2,6 +2,7 @@ from .preprocess_task import *
 from .classification_task import *
 from .train_task import TrainTask
 
+
 class TestTask(ClassificationTask):
     def __init__(self, directory, classifier, testing_ratio,
                  lumberjack_instance):

@@ -23,6 +23,10 @@ class Classifier:
         self.feature_names = []
 
 
+    def add_feature_names(self, feature_names):
+        self.feature_names.extend(feature_names)
+
+
     def add_samples(self, X, y, X_data, y_labels):
         if (y_labels is None):
             X_data = X
@@ -125,10 +129,12 @@ class Classifier:
     def export_classifier(self, pkl_filename):
         # Creates a new file that stores the classifier
         with open(pkl_filename, 'wb') as file:
-            pickle.dump(self.__rf, file)
+            pickle.dump([self.__rf, self.feature_names], file)
 
 
     def import_classifier(self, pkl_filename):
         # Loads a saved classifier
         with open(pkl_filename, 'rb') as file:
-            self.__rf = pickle.load(file)
+            data = pickle.load(file)
+            self.__rf = data[0]
+            self.features_names = data[1]

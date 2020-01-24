@@ -41,6 +41,7 @@ from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
 from .scripts.features import AlgebraFeature, FilterFeature
 from .scripts.features import FilterGaussFeature, NdviFeature, DayFeature
+from .scripts.features import TextureFeature, DemTextureFeature
 from .scripts.seasonal_analysis import SeasonalAnalysis
 from .scripts.calculate_features_task import CalculateFeaturesTask
 from .scripts.tree_correction import TreeCorrectionTask
@@ -373,14 +374,15 @@ class Lumberjack:
             self.features.append(FilterGaussFeature())
         if self.dlg.checkBox_ndvi.isChecked():
             self.features.append(NdviFeature())
+        if self.dlg.checkBox_textures.isChecked():
+            self.features.append(TextureFeature())
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
+            self.features.append(DemTextureFeature())
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_directory_seasonal.text(),
             features = self.features,
-            include_textures_image = self.dlg.checkBox_textures.isChecked(),
-            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.calculate_features_task)
 
@@ -416,7 +418,9 @@ class Lumberjack:
 
     def train(self):
         self.dlg.hide()
+        self.classifier = Classifier()
         self.features = []
+
         if self.dlg.checkBox_bandsAlgebra.isChecked():
             self.features.append(AlgebraFeature())
         if self.dlg.checkBox_medianFilter.isChecked():
@@ -424,23 +428,25 @@ class Lumberjack:
             self.features.append(FilterGaussFeature())
         if self.dlg.checkBox_ndvi.isChecked():
             self.features.append(NdviFeature())
+        if self.dlg.checkBox_textures.isChecked():
+            self.features.append(TextureFeature())
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
+            self.features.append(DemTextureFeature())
+
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
             features = self.features,
-            include_textures_image = self.dlg.checkBox_textures.isChecked(),
-            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
 
-        self.classifier = Classifier()
         self.testing_ratio = self.dlg.checkBox_testing_ratio.isChecked()
 
         self.train_task = TrainTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
             classifier = self.classifier,
             testing_ratio = self.testing_ratio,
+            features = self.features,
             lumberjack_instance = self)
 
         self.train_task.addSubTask(
@@ -463,14 +469,15 @@ class Lumberjack:
             self.features.append(FilterGaussFeature())
         if self.dlg.checkBox_ndvi.isChecked():
             self.features.append(NdviFeature())
+        if self.dlg.checkBox_textures.isChecked():
+            self.features.append(TextureFeature())
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
+            self.features.append(DemTextureFeature())
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_testingDirectory.text(),
             features = self.features,
-            include_textures_image = self.dlg.checkBox_textures.isChecked(),
-            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
 
         self.test_task = TestTask(
@@ -494,14 +501,15 @@ class Lumberjack:
             self.features.append(FilterGaussFeature())
         if self.dlg.checkBox_ndvi.isChecked():
             self.features.append(NdviFeature())
+        if self.dlg.checkBox_textures.isChecked():
+            self.features.append(TextureFeature())
         if self.dlg.checkBox_dem.isChecked():
             self.features.append(DayFeature())
+            self.features.append(DemTextureFeature())
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_predictionDirectoy.text(),
             features = self.features,
-            include_textures_image = self.dlg.checkBox_textures.isChecked(),
-            include_textures_places = self.dlg.checkBox_dem.isChecked(),
             lumberjack_instance = self)
 
         self.predict_task = PredictTask(

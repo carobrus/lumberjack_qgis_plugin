@@ -163,8 +163,15 @@
               <property name="enabled">
                <bool>false</bool>
               </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Feature Importances</string>
+               <string>Feature
+Importances</string>
               </property>
              </widget>
             </item>
@@ -710,6 +717,12 @@
  <tabstops>
   <tabstop>pushButton_import</tabstop>
   <tabstop>pushButton_export</tabstop>
+  <tabstop>checkBox_bandsAlgebra</tabstop>
+  <tabstop>checkBox_medianFilter</tabstop>
+  <tabstop>checkBox_ndvi</tabstop>
+  <tabstop>checkBox_textures</tabstop>
+  <tabstop>checkBox_dem</tabstop>
+  <tabstop>pushButton_feature_importances</tabstop>
   <tabstop>lineEdit_trainingDirectory</tabstop>
   <tabstop>pushButton_trainingDirectory</tabstop>
   <tabstop>checkBox_testing_ratio</tabstop>
@@ -721,7 +734,6 @@
   <tabstop>pushButton_predictionDirectory</tabstop>
   <tabstop>checkBox_addFile</tabstop>
   <tabstop>pushButton_prediction</tabstop>
-  <tabstop>plainTextEdit</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>lineEdit_directory_seasonal</tabstop>
   <tabstop>pushButton_seasonal</tabstop>
@@ -737,6 +749,7 @@
   <tabstop>pushButton_output_dem</tabstop>
   <tabstop>checkBox_add_dem</tabstop>
   <tabstop>pushButton_correct_trees</tabstop>
+  <tabstop>plainTextEdit</tabstop>
  </tabstops>
  <resources/>
  <connections/>

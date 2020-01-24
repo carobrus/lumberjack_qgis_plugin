@@ -11,18 +11,21 @@ class ClassificationTask(PreProcessTask):
 
     def filter_samples(self, places):
         for place in places:
-            roi_dataset = gdal.Open(place.vector_file_path[:-4]+".tif", gdal.GA_ReadOnly)
+            roi_dataset = gdal.Open(place.vector_file_path[:-4]+".tif",
+                                    gdal.GA_ReadOnly)
             roi = roi_dataset.GetRasterBand(1).ReadAsArray().astype(np.uint8)
             y = roi[roi > 0]
 
             for image in place.images:
                 file_name_stack = "{}/{}_sr{}".format(
-                    image.path, image.base_name, ClassificationTask.STACK_SUFFIX)
+                    image.path, image.base_name,
+                    ClassificationTask.STACK_SUFFIX)
 
                 dataset = gdal.Open(file_name_stack, gdal.GA_ReadOnly)
 
                 features_array = np.zeros(
-                    (roi_dataset.RasterYSize, roi_dataset.RasterXSize, dataset.RasterCount),
+                    (roi_dataset.RasterYSize, roi_dataset.RasterXSize,
+                    dataset.RasterCount),
                     dtype=np.float32)
                 print("Shape array features: {}".format(features_array.shape))
 

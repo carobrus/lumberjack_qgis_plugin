@@ -33,27 +33,22 @@ class PreProcessTask(QgsTask):
         places = []
         for place_directory in os.scandir(root_directory):
             if (place_directory.is_dir()):
-                place = Place(place_directory.path)
+                place = Place(place_directory.path.replace("\\", "/"))
 
                 for img_directory_or_file in os.scandir(place.directory_path):
                     if (img_directory_or_file.is_dir()):
-                        image_directory = str(img_directory_or_file.path)
+                        image_directory = str(img_directory_or_file.path).replace("\\", "/")
                         image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
-                            image_subfile_path = str(image_subfile.path)
+                            image_subfile_path = str(image_subfile.path).replace("\\", "/")
                             if (image_subfile_path[-(len(IMAGE_METADATA_SUFFIX)):] == IMAGE_METADATA_SUFFIX):
                                 image.base_name = image_subfile_path[-48:-8]
-                            elif (image_subfile_path[-(len(TEXTURES_SUFFIX)):] == TEXTURES_SUFFIX):
-                                image.extra_features = image_subfile_path
                         place.images.append(image)
                     elif (img_directory_or_file.is_file()):
-                        file_path = str(img_directory_or_file.path)
+                        file_path = str(img_directory_or_file.path).replace("\\", "/")
                         if (file_path[-(len(EXTENSION_FILE_SUFFIX)):] ==
                                 EXTENSION_FILE_SUFFIX):
                             place.extension_file_path = file_path
-                        elif (file_path[-(len(DEM_TEXTURES_SUFFIX)):] ==
-                                DEM_TEXTURES_SUFFIX):
-                            place.dem_textures_file_path = file_path
                         elif (file_path[-(len(SHAPEFILE_SUFFIX)):] ==
                                 SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
@@ -125,12 +120,12 @@ class PreProcessTask(QgsTask):
                 # image represent each landsat image (a folder with the bands)
                 print("Landsat image directory: {}".format(image.path))
 
-                file_name_band = "{}/{}_sr_band{}.tif".format(
-                    image.path, image.base_name, "{}")
-                file_name_crop = "{}/{}_sr_band{}{}".format(
-                    image.path, image.base_name, "{}", CROP_SUFFIX)
-                file_name_merged = "{}/{}_sr{}".format(
-                    image.path, image.base_name, MERGED_SUFFIX)
+                file_name_band = os.path.join(
+                    image.path, "{}_sr_band{}.tif".format(image.base_name, "{}"))
+                file_name_crop = os.path.join(
+                    image.path, "{}_sr_band{}{}".format(image.base_name, "{}", CROP_SUFFIX))
+                file_name_merged = os.path.join(
+                    image.path, "{}_sr{}".format(image.base_name, MERGED_SUFFIX))
 
                 # Crop all bands according to the extent file
                 self.crop_images(

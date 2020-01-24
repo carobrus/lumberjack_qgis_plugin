@@ -1,3 +1,4 @@
+import os
 from osgeo import gdal
 import numpy as np
 import time
@@ -7,13 +8,10 @@ from .. import Lumberjack
 
 
 class CalculateFeaturesTask(PreProcessTask):
-    def __init__(self, directory, features, include_textures_image,
-                 include_textures_places, lumberjack_instance):
+    def __init__(self, directory, features, lumberjack_instance):
         super().__init__("Calculate Features Task", QgsTask.CanCancel)
         self.directory = directory
         self.features = features
-        self.include_textures_image = include_textures_image
-        self.include_textures_places = include_textures_places
         self.lumberjack_instance = lumberjack_instance
 
 
@@ -30,19 +28,16 @@ class CalculateFeaturesTask(PreProcessTask):
 
             for place in places:
                 for image in place.images:
-                    file_name_stack = "{}/{}_sr{}".format(
-                        image.path, image.base_name, "_stack.tif")
-                    file_merged = "{}/{}_sr{}".format(
-                        image.path, image.base_name, MERGED_SUFFIX)
-                    files = [file_merged]
+                    file_name_stack = os.path.join(
+                        image.path, "{}_sr{}".format(
+                            image.base_name, "_stack.tif"))
+                    files = [os.path.join(
+                        image.path, "{}_sr{}".format(
+                            image.base_name, MERGED_SUFFIX))]
                     for feature in self.features:
                         files.append(
-                            feature.file_format.format(file_merged[:-4]))
-                    # add textures
-                    if self.include_textures_image:
-                        files.append(image.extra_features)
-                    if self.include_textures_places:
-                        files.append(place.dem_textures_file_path)
+                            feature.get_file_name(image.path, image.base_name))
+
                     self.total_features = self.calculate_total_features(files)
                     self.merge_images(
                         files, file_name_stack,
