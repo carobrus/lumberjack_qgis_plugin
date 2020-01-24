@@ -89,7 +89,7 @@ class Classifier:
 
 
     def get_feature_names(self):
-        return self.feature_names
+        return tuple(self.feature_names)
 
     def predict_an_image(self, input_image, output_image):
         dataset = gdal.Open(input_image, gdal.GA_ReadOnly)
@@ -133,12 +133,10 @@ class Classifier:
     def export_classifier(self, pkl_filename):
         # Creates a new file that stores the classifier
         with open(pkl_filename, 'wb') as file:
-            pickle.dump([self.__rf, self.feature_names], file)
+            pickle.dump((self.__rf, self.feature_names), file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
     def import_classifier(self, pkl_filename):
         # Loads a saved classifier
         with open(pkl_filename, 'rb') as file:
-            data = pickle.load(file)
-            self.__rf = data[0]
-            self.features_names = data[1]
+            self.__rf, self.feature_names = pickle.load(file)

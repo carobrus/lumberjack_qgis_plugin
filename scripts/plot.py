@@ -4,7 +4,6 @@ from PyQt5 import QtGui
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas)
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -13,7 +12,7 @@ class PlotWindow(QMainWindow):
         super(PlotWindow, self).__init__(parent)
         self.title = 'Feature Importances'
         self.width = 640
-        self.height = 700
+        self.height = 930
         self.feature_importances = feature_importances
         self.labels = labels
         self.initUI()
@@ -21,6 +20,7 @@ class PlotWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle(self.title)
+        self.setMinimumSize(500, 500)
         self.resize(self.width, self.height)
         # self.setFixedSize(self.width, self.height)
         layout = QtGui.QVBoxLayout()
@@ -28,28 +28,26 @@ class PlotWindow(QMainWindow):
             feature_importances=self.feature_importances,
             labels=self.labels)
         layout.addWidget(self.plot_canvas)
-        # m.move(0,0)
-        self.setLayout(layout)
-        # self.show()
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+        self.show()
 
 
 class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None, dpi=100, feature_importances=None,
                  labels=None):
-        super(PlotCanvas, self).__init__(Figure())
+        self.fig = Figure(dpi=dpi)
+        self.axes = self.fig.add_subplot(111)
+        FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
-        fig = Figure(dpi=dpi)
-        self.canvas = FigureCanvas(self.figure)
-        # fig.tight_layout()
-        # fig.set_size_inches(5, 7, forward=True)
-        self.axes = fig.add_subplot(111)
+        FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.fig.subplots_adjust(left=0.2, bottom=0.05, right=0.99, top=0.95, wspace=0, hspace=0)
         self.feature_importances = feature_importances
         self.labels = labels
-
-        FigureCanvas.setSizePolicy(
-            self, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry(self)
+        # FigureCanvas.updateGeometry(self)
         self.plot()
+        self.fig.tight_layout()
 
 
     def plot(self):
@@ -57,10 +55,9 @@ class PlotCanvas(FigureCanvas):
         y = self.labels
         y_pos = np.arange(len(self.labels))
 
-        ax = self.figure.add_subplot(111)
-        ax.barh(y_pos, data, align='center')
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(y)
-        ax.invert_yaxis()
-        ax.set_title('Features Importance')
+        self.axes.barh(y_pos, data, align='center')
+        self.axes.set_yticks(y_pos)
+        self.axes.set_yticklabels(y)
+        self.axes.invert_yaxis()
+        self.axes.set_title('Features Importance')
         self.draw()
