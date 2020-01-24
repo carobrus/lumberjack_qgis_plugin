@@ -83,9 +83,13 @@ class Classifier:
         # out.append(self.__rf.feature_importances_)
         return out
 
+
     def get_feature_importances(self):
         return self.__rf.feature_importances_
 
+
+    def get_feature_names(self):
+        return self.feature_names
 
     def predict_an_image(self, input_image, output_image):
         dataset = gdal.Open(input_image, gdal.GA_ReadOnly)

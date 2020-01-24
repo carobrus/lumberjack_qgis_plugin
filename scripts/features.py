@@ -60,7 +60,7 @@ class FilterFeature(Feature):
             file_input=file_in, file_output_median=file_out)
         if (not self.feature_names):
             self.feature_names = (
-                ["median_filt_band{}".format(i) for i in range(1, band_count+1)])
+                ["median_band{}".format(i) for i in range(1, band_count+1)])
 
 
 class FilterGaussFeature(Feature):
@@ -79,7 +79,7 @@ class FilterGaussFeature(Feature):
             file_input=file_in, file_output_gaussian=file_out)
         if (not self.feature_names):
             self.feature_names = (
-                ["gauss_filt_band{}".format(i) for i in range(1, band_count+1)])
+                ["gauss_band{}".format(i) for i in range(1, band_count+1)])
 
 
 class NdviFeature(Feature):
@@ -182,7 +182,7 @@ class TextureFeature(Feature):
 
     def execute(self, file_in):
         if (not self.feature_names):
-            dataset = gdal.Open(file_in, gdal.GA_ReadOnly)
+            dataset = gdal.Open("{}{}".format(file_in[:-14], TEXTURES_SUFFIX), gdal.GA_ReadOnly)
             self.feature_names = (
                 [dataset.GetRasterBand(i).GetDescription() for i in range(1, dataset.RasterCount+1)])
 

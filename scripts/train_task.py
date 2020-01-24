@@ -36,6 +36,7 @@ class TrainTask(ClassificationTask):
             # Add samples to train
             self.filter_samples(places)
 
+            self.classifier.add_feature_names(["band{}".format(i) for i in range(1, BAND_TOTAL+1)])
             for feature in self.features:
                 self.classifier.add_feature_names(feature.feature_names)
 

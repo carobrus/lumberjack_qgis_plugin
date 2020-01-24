@@ -281,7 +281,8 @@ class Lumberjack:
     def graph_feature_importances(self):
         # Barchart window with feature importances
         self.plotWindow = PlotWindow(self.dlg,
-            feature_importances=self.classifier.get_feature_importances())
+            feature_importances=self.classifier.get_feature_importances(),
+            labels=tuple(self.classifier.get_feature_names()))
         self.plotWindow.show()
 
 
