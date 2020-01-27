@@ -3,8 +3,8 @@ from .classification_task import *
 
 
 class TrainTask(ClassificationTask):
-    def __init__(self, directory, classifier,
-                 testing_ratio, features, lumberjack_instance):
+    def __init__(self, directory, classifier, testing_ratio, 
+                 features, lumberjack_instance):
         super().__init__("Lumberjack training", QgsTask.CanCancel)
         self.directory = directory
         self.classifier = classifier
@@ -36,9 +36,10 @@ class TrainTask(ClassificationTask):
             # Add samples to train
             self.filter_samples(places)
 
-            self.classifier.add_feature_names(["band{}".format(i) for i in range(1, Lumberjack.BAND_TOTAL+1)])
+            features_names = []
             for feature in self.features:
-                self.classifier.add_feature_names(feature.feature_names)
+                features_names.extend(feature.feature_names)
+            self.classifier.set_feature_names(features_names)
 
             # Defines to train with the whole set or if it has to be split
             if self.without_ratio:

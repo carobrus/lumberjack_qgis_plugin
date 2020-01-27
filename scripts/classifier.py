@@ -23,10 +23,6 @@ class Classifier:
         self.feature_names = []
 
 
-    def add_feature_names(self, feature_names):
-        self.feature_names.extend(feature_names)
-
-
     def add_samples(self, X, y, X_data, y_labels):
         if (y_labels is None):
             X_data = X
@@ -90,6 +86,11 @@ class Classifier:
 
     def get_feature_names(self):
         return tuple(self.feature_names)
+
+
+    def set_feature_names(self, feature_names):
+        self.feature_names = feature_names
+
 
     def predict_an_image(self, input_image, output_image):
         dataset = gdal.Open(input_image, gdal.GA_ReadOnly)

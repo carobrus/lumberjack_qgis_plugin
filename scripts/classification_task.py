@@ -2,9 +2,6 @@ from .preprocess_task import *
 
 
 class ClassificationTask(PreProcessTask):
-    STACK_SUFFIX = "_stack.tif"
-
-
     def __init__(self, description, task):
         super().__init__(description, task)
 
@@ -17,9 +14,9 @@ class ClassificationTask(PreProcessTask):
             y = roi[roi > 0]
 
             for image in place.images:
-                file_name_stack = "{}/{}_sr{}".format(
-                    image.path, image.base_name,
-                    ClassificationTask.STACK_SUFFIX)
+                file_name_stack = os.path.join(
+                        image.path, 
+                        "{}{}".format(image.base_name, Lumberjack.STACK_SUFFIX))
 
                 dataset = gdal.Open(file_name_stack, gdal.GA_ReadOnly)
 

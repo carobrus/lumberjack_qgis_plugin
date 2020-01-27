@@ -53,6 +53,7 @@ from .scripts.plotbox import PlotWindow as PlotboxWindow
 
 
 MESSAGE_CATEGORY = 'Lumberjack'
+BAND_SUFFIX = "_band{}.tif"
 IMAGE_METADATA_SUFFIX = "_MTL.txt"
 EXTENSION_FILE_SUFFIX = "_reg.tif"
 PLACE_FEATURE_SUFFIX = "_text.tif"
@@ -66,6 +67,8 @@ CROP_SUFFIX = "_crop.tif"
 MERGED_SUFFIX = "_merged.tif"
 SHAPEFILE_SUFFIX = "_roi.shp"
 MASK_SUFFIX = "_mask.tif"
+STACK_SUFFIX = "_stack.tif"
+PREDICTION_SUFFIX = "_predic.tif"
 BAND_TOTAL = 7
 
 
@@ -371,7 +374,7 @@ class Lumberjack:
         self.dlg.plainTextEdit.appendPlainText(
             "Finished tree correction in {} seconds".format(str(time)))
         if self.dlg.checkBox_add_dem.isChecked():
-            file_name = output_file.split("/")[-1]
+            file_name = os.path.split(output_file)[1]
             self.iface.addRasterLayer(output_file, file_name)
             layers = QgsProject.instance().mapLayersByName(file_name)
         self.iface.messageBar().pushMessage(
@@ -381,6 +384,7 @@ class Lumberjack:
 
     def create_features_array(self):
         self.features = []
+        self.features.append(ImageFeature(MERGED_SUFFIX))
         if self.dlg.checkBox_bandsAlgebra.isChecked():
             self.features.append(AlgebraFeature(ALGEBRA_SUFFIX))
         if self.dlg.checkBox_medianFilter.isChecked():
@@ -417,13 +421,13 @@ class Lumberjack:
         QgsApplication.taskManager().addTask(self.seasonal_analysis)
 
 
-    def notify_calculate_features(self, start_time, r, time):
-        self.dlg.comboBox_features.addItems([str(i) for i in range(1, r+1)])
+    def notify_calculate_features(self, start_time, r, feature_names, time):
+        self.dlg.comboBox_features.addItems(feature_names)
         self.dlg.plainTextEdit.appendPlainText(
             "======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText(
             "Finished features in {} seconds".format(str(time)))
-        # self.dlg.pushButton_boxplot.setEnabled(True)
+        self.dlg.pushButton_boxplot.setEnabled(True)
         # self.dlg.open()
 
 
@@ -548,10 +552,11 @@ class Lumberjack:
             "Success", "Output file/s created", level=Qgis.Success, duration=5)
         if self.dlg.checkBox_addFile.isChecked():
             for file_path in output_files:
-                file_name = file_path.split("/")[-1]
+                file_name = os.path.split(file_path)[1]
                 self.iface.addRasterLayer(file_path, file_name)
                 layers = QgsProject.instance().mapLayersByName(file_name)
-                abs_style_path = self.plugin_dir + "/prediction_tree_style.qml"
+                abs_style_path = os.path.join(
+                    self.plugin_dir, "prediction_tree_style.qml")
                 layers[0].loadNamedStyle(abs_style_path)
                 self.iface.layerTreeView().refreshLayerSymbology(
                     layers[0].id())

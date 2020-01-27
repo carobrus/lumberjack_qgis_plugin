@@ -45,11 +45,10 @@ class SeasonalAnalysis(PreProcessTask):
 
                 stack_files = []
                 for image in place.images:
-                    file_name_stack = "{}/{}_sr_{}".format(
-                        image.path, image.base_name, "stack.tif")
-                    file_name_metadata = "{}/{}_{}".format(
-                        image.path, image.base_name, "MTL.txt")
-                    stack_files.append([file_name_stack, file_name_metadata])
+                    file_name_stack = os.path.join(
+                        image.path, 
+                        "{}{}".format(image.base_name, Lumberjack.STACK_SUFFIX))
+                    stack_files.append([file_name_stack, image.metadata_file])
 
                 for i, file in enumerate(stack_files):
                     features = gdal.Open(file[0], gdal.GA_ReadOnly)

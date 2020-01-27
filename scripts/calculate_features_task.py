@@ -13,6 +13,7 @@ class CalculateFeaturesTask(PreProcessTask):
         self.directory = directory
         self.features = features
         self.lumberjack_instance = lumberjack_instance
+        self.feature_names = []
 
 
     def run(self):
@@ -29,19 +30,23 @@ class CalculateFeaturesTask(PreProcessTask):
             for place in places:
                 for image in place.images:
                     file_name_stack = os.path.join(
-                        image.path, "{}_sr{}".format(
-                            image.base_name, "_stack.tif"))
-                    files = [os.path.join(
-                        image.path, "{}_sr{}".format(
-                            image.base_name, Lumberjack.MERGED_SUFFIX))]
+                        image.path, "{}{}".format(
+                            image.base_name, Lumberjack.STACK_SUFFIX))
+                    # files = [os.path.join(
+                    #     image.path, "{}_sr{}".format(
+                    #         image.base_name, Lumberjack.MERGED_SUFFIX))]
+                    files = []
                     for feature in self.features:
                         files.append(
-                            feature.get_file_name(image.path, image.base_name))
+                            feature.get_file_name(image))
 
                     self.total_features = self.calculate_total_features(files)
                     self.merge_images(
                         files, file_name_stack,
                         self.total_features, gdal.GDT_Float32)
+            
+            for feature in self.features:
+                self.feature_names.extend(feature.feature_names)
 
             self.elapsed_time = time.time() - self.start_time
             print("Finished in {} seconds".format(str(self.elapsed_time)))
@@ -73,7 +78,8 @@ class CalculateFeaturesTask(PreProcessTask):
                     td=self.directory),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
             self.lumberjack_instance.notify_calculate_features(
-                self.start_time_str, self.total_features, self.elapsed_time)
+                self.start_time_str, self.total_features,
+                self.feature_names, self.elapsed_time)
         else:
             if self.exception is None:
                 QgsMessageLog.logMessage(

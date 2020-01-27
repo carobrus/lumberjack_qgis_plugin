@@ -19,22 +19,26 @@ class PreProcessTask(QgsTask):
         # do the processing.
         # Creates an structure with the Place and Image data objects so it's
         # easy to iterate, access files and improves readability
+        root_directory = os.path.normpath(root_directory)
         places = []
         for place_directory in os.scandir(root_directory):
             if (place_directory.is_dir()):
-                place = Place(place_directory.path.replace("\\", "/"))
+                place = Place(place_directory.path)
 
                 for img_directory_or_file in os.scandir(place.directory_path):
                     if (img_directory_or_file.is_dir()):
-                        image_directory = str(img_directory_or_file.path).replace("\\", "/")
+                        image_directory = str(img_directory_or_file.path)
                         image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
-                            image_subfile_path = str(image_subfile.path).replace("\\", "/")
+                            image_subfile_path = str(image_subfile.path)
+                            if (image_subfile_path[-(len(Lumberjack.BAND_SUFFIX.format("1"))):] == Lumberjack.BAND_SUFFIX.format("1")):
+                                # image.base_name = image_subfile_path[-48:-8]
+                                image.base_name = (os.path.split(image_subfile_path)[1])[:-(len(Lumberjack.BAND_SUFFIX.format("1")))]
                             if (image_subfile_path[-(len(Lumberjack.IMAGE_METADATA_SUFFIX)):] == Lumberjack.IMAGE_METADATA_SUFFIX):
-                                image.base_name = image_subfile_path[-48:-8]
+                                image.metadata_file = image_subfile_path
                         place.images.append(image)
                     elif (img_directory_or_file.is_file()):
-                        file_path = str(img_directory_or_file.path).replace("\\", "/")
+                        file_path = str(img_directory_or_file.path)
                         if (file_path[-(len(Lumberjack.EXTENSION_FILE_SUFFIX)):] ==
                                 Lumberjack.EXTENSION_FILE_SUFFIX):
                             place.extension_file_path = file_path
@@ -110,11 +114,10 @@ class PreProcessTask(QgsTask):
                 print("Landsat image directory: {}".format(image.path))
 
                 file_name_band = os.path.join(
-                    image.path, "{}_sr_band{}.tif".format(image.base_name, "{}"))
-                file_name_crop = os.path.join(
-                    image.path, "{}_sr_band{}{}".format(image.base_name, "{}", Lumberjack.CROP_SUFFIX))
+                    image.path, "{}{}".format(image.base_name, Lumberjack.BAND_SUFFIX))
+                file_name_crop = "{}{}".format(file_name_band[:-4], Lumberjack.CROP_SUFFIX)
                 file_name_merged = os.path.join(
-                    image.path, "{}_sr{}".format(image.base_name, Lumberjack.MERGED_SUFFIX))
+                    image.path, "{}{}".format(image.base_name, Lumberjack.MERGED_SUFFIX))
 
                 # Crop all bands according to the extent file
                 self.crop_images(
@@ -131,7 +134,7 @@ class PreProcessTask(QgsTask):
                         os.remove(file)
 
                 for feature in self.features:
-                    feature.execute(file_name_merged, image.path, image.base_name)
+                    feature.execute(file_name_merged, image)
 
 
     def __init__(self, description, task):

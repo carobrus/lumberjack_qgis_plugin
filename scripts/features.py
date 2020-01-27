@@ -18,11 +18,11 @@ class Feature:
         self.feature_names = []
 
 
-    def get_file_name(self, path, base_name):
+    def get_file_name(self, image):
         raise NotImplementedError("Subclasses must override get_file_name()")
 
 
-    def execute(self, file_in, path, base_name):
+    def execute(self, file_in, image):
         raise NotImplementedError("Subclasses must override execute()")
 
 
@@ -35,12 +35,12 @@ class AlgebraFeature(Feature):
         self.feature_names = ["mean", "std", "slope", "intercept"]
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, AlgebraFeature.SUFFIX))
+    def get_file_name(self, image):
+        return os.path.join(image.path, "{}{}".format(image.base_name, AlgebraFeature.SUFFIX))
 
 
-    def execute(self, file_in, path, base_name):
-        file_out = self.get_file_name(path, base_name)
+    def execute(self, file_in, image):
+        file_out = self.get_file_name(image)
         bands_algebra.generate_algebra_file(file_in, file_out)
 
 
@@ -53,12 +53,12 @@ class FilterFeature(Feature):
         self.feature_names = []
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, FilterFeature.SUFFIX))
+    def get_file_name(self, image):
+        return os.path.join(image.path, "{}{}".format(image.base_name, FilterFeature.SUFFIX))
 
 
-    def execute(self, file_in, path, base_name):
-        file_out = self.get_file_name(path, base_name)
+    def execute(self, file_in, image):
+        file_out = self.get_file_name(image)
         band_count = filters.generate_filter_file(
             file_input=file_in, file_output_median=file_out)
         if (not self.feature_names):
@@ -75,12 +75,12 @@ class FilterGaussFeature(Feature):
         self.feature_names = []
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, FilterGaussFeature.SUFFIX))
+    def get_file_name(self, image):
+        return os.path.join(image.path, "{}{}".format(image.base_name, FilterGaussFeature.SUFFIX))
 
 
-    def execute(self, file_in, path, base_name):
-        file_out = self.get_file_name(path, base_name)
+    def execute(self, file_in, image):
+        file_out = self.get_file_name(image)
         band_count = filters.generate_filter_file(
             file_input=file_in, file_output_gaussian=file_out)
         if (not self.feature_names):
@@ -97,12 +97,12 @@ class NdviFeature(Feature):
         self.feature_names = ["ndvi"]
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, NdviFeature.SUFFIX))
+    def get_file_name(self, image):
+        return os.path.join(image.path, "{}{}".format(image.base_name, NdviFeature.SUFFIX))
 
 
-    def execute(self, file_in, path, base_name):
-        file_out = self.get_file_name(path, base_name)
+    def execute(self, file_in, image):
+        file_out = self.get_file_name(image)
         ndvi.generate_ndvi_file(file_in, file_out)
 
 
@@ -115,16 +115,14 @@ class DayFeature(Feature):
         self.feature_names = ["day_normalized", "day_transform"]
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, DayFeature.SUFFIX))
+    def get_file_name(self, image):
+        return os.path.join(image.path, "{}{}".format(image.base_name, DayFeature.SUFFIX))
 
 
-    def execute(self, file_in, path, base_name):
-        file_out = self.get_file_name(path, base_name)
-        file_name_metadata = "{}{}".format(
-            file_in[:-14], Lumberjack.IMAGE_METADATA_SUFFIX)
-        date = self.get_date_from_metadata(file_name_metadata)
-        row = int(self.get_row_from_metadata(file_name_metadata))
+    def execute(self, file_in, image):
+        file_out = self.get_file_name(image)
+        date = self.get_date_from_metadata(image.metadata_file)
+        row = int(self.get_row_from_metadata(image.metadata_file))
         number_of_day = self.transform_day(date, row)
         number_of_day_normalized = number_of_day / 366
         number_of_day_transform = math.sin(number_of_day_normalized * math.pi)
@@ -183,21 +181,23 @@ class DayFeature(Feature):
 
 
 class ImageFeature(Feature):
-    SUFFIX = ""
-
     def __init__(self, suffix):
         super().__init__()
-        ImageFeature.SUFFIX = suffix
+        self.suffix = suffix
         self.feature_names = []
 
 
-    def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}{}".format(base_name, ImageFeature.SUFFIX))
+    def get_file_name(self, image):
+        # return os.path.join(image.path, "{}{}".format(image.base_name, ImageFeature.SUFFIX))
+        for file in os.listdir(image.path):
+            if file.endswith(self.suffix):
+                return os.path.join(image.path, file)
 
 
-    def execute(self, file_in, path, base_name):
+    def execute(self, file_in, image):
         if (not self.feature_names):
-            dataset = gdal.Open("{}{}".format(file_in[:-14], ImageFeature.SUFFIX), gdal.GA_ReadOnly)
+            file_features = self.get_file_name(image)
+            dataset = gdal.Open(file_features, gdal.GA_ReadOnly)
             self.feature_names = (
                 [dataset.GetRasterBand(i).GetDescription() for i in range(1, dataset.RasterCount+1)])
 
@@ -211,20 +211,16 @@ class PlaceFeature(Feature):
         self.feature_names = []
 
 
-    def get_file_name(self, path, base_name):
-        dir_dem_text = os.path.split(path)[0]
+    def get_file_name(self, image):
+        dir_dem_text = os.path.split(image.path)[0]
         for file in os.listdir(dir_dem_text):
             if file.endswith(PlaceFeature.SUFFIX):
                 return os.path.join(dir_dem_text, file)
 
 
-    def execute(self, file_in, path, base_name):
+    def execute(self, file_in, image):
         if (not self.feature_names):
-            dir_dem_text = os.path.split(os.path.split(file_in)[0])[0]
-            for file in os.listdir(dir_dem_text):
-                if file.endswith(PlaceFeature.SUFFIX):
-                    file_dem_text = os.path.join(dir_dem_text, file)
-
-                    dataset = gdal.Open(file_dem_text, gdal.GA_ReadOnly)
-                    self.feature_names = (
-                        ["dem-{}".format(dataset.GetRasterBand(i).GetDescription()) for i in range(1, dataset.RasterCount+1)])
+            file_dem_text = self.get_file_name(image)
+            dataset = gdal.Open(file_dem_text, gdal.GA_ReadOnly)
+            self.feature_names = (
+                ["dem-{}".format(dataset.GetRasterBand(i).GetDescription()) for i in range(1, dataset.RasterCount+1)])

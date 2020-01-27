@@ -2,10 +2,6 @@ from .preprocess_task import *
 
 
 class PredictTask(PreProcessTask):
-    PREDICTION_SUFFIX = "_predic.tif"
-    STACK_SUFFIX = "_stack.tif"
-
-
     def __init__(self, directory, classifier, lumberjack_instance):
         super().__init__("Lumberjack prediction", QgsTask.CanCancel)
         self.directory = directory
@@ -30,13 +26,16 @@ class PredictTask(PreProcessTask):
             for place in places:
                 for image in place.images:
                     # Create the output filename
-                    file_name_stack = "{}/{}_sr{}".format(
-                        image.path, image.base_name, PredictTask.STACK_SUFFIX)
+                    file_name_stack = os.path.join(
+                        image.path, 
+                        "{}{}".format(image.base_name, Lumberjack.STACK_SUFFIX))
                     time_stamp = self.start_time_str[:19]
-                    output_file = "{}/{}_sr_{}{}".format(
-                        image.path, image.base_name,
-                        time_stamp.replace(" ", "_").replace(":","-"),
-                        PredictTask.PREDICTION_SUFFIX)
+                    output_file = os.path.join(
+                        image.path,
+                        "{}_{}{}".format(
+                            image.base_name,
+                            time_stamp.replace(" ", "_").replace(":","-"),
+                            Lumberjack.PREDICTION_SUFFIX))
                     # Add the output file to array
                     self.output_files.append(output_file)
 
