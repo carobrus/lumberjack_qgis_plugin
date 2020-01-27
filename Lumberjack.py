@@ -41,7 +41,7 @@ from .scripts.predict_task import PredictTask
 from .scripts.classifier import Classifier
 from .scripts.features import AlgebraFeature, FilterFeature
 from .scripts.features import FilterGaussFeature, NdviFeature, DayFeature
-from .scripts.features import TextureFeature, DemTextureFeature
+from .scripts.features import ImageFeature, PlaceFeature
 from .scripts.seasonal_analysis import SeasonalAnalysis
 from .scripts.calculate_features_task import CalculateFeaturesTask
 from .scripts.tree_correction import TreeCorrectionTask
@@ -53,6 +53,20 @@ from .scripts.plotbox import PlotWindow as PlotboxWindow
 
 
 MESSAGE_CATEGORY = 'Lumberjack'
+IMAGE_METADATA_SUFFIX = "_MTL.txt"
+EXTENSION_FILE_SUFFIX = "_reg.tif"
+PLACE_FEATURE_SUFFIX = "_text.tif"
+IMAGE_FEATURE_SUFFIX = "_text.tif"
+ALGEBRA_SUFFIX = "_alge.tif"
+FILTER_SUFFIX = "_filt.tif"
+GAUSS_SUFFIX = "_gaus.tif"
+NDVI_SUFFIX =  "_ndvi.tif"
+DAY_SUFFIX = "_day.tif"
+CROP_SUFFIX = "_crop.tif"
+MERGED_SUFFIX = "_merged.tif"
+SHAPEFILE_SUFFIX = "_roi.shp"
+MASK_SUFFIX = "_mask.tif"
+BAND_TOTAL = 7
 
 
 class Lumberjack:
@@ -315,7 +329,7 @@ class Lumberjack:
                 self.select_seasonal_directory)
 
             self.dlg.pushButton_calculate_features.clicked.connect(
-                self.calculate_features)
+                self.calculate_features_seasonal_analysis)
             self.dlg.pushButton_boxplot.clicked.connect(
                 self.plot_seasonal_analysis)
 
@@ -365,21 +379,25 @@ class Lumberjack:
             level=Qgis.Success, duration=5)
 
 
-    def calculate_features(self):
-        self.dlg.hide()
+    def create_features_array(self):
         self.features = []
         if self.dlg.checkBox_bandsAlgebra.isChecked():
-            self.features.append(AlgebraFeature())
+            self.features.append(AlgebraFeature(ALGEBRA_SUFFIX))
         if self.dlg.checkBox_medianFilter.isChecked():
-            self.features.append(FilterFeature())
-            self.features.append(FilterGaussFeature())
+            self.features.append(FilterFeature(FILTER_SUFFIX))
+            self.features.append(FilterGaussFeature(GAUSS_SUFFIX))
         if self.dlg.checkBox_ndvi.isChecked():
-            self.features.append(NdviFeature())
-        if self.dlg.checkBox_textures.isChecked():
-            self.features.append(TextureFeature())
-        if self.dlg.checkBox_dem.isChecked():
-            self.features.append(DayFeature())
-            self.features.append(DemTextureFeature())
+            self.features.append(NdviFeature(NDVI_SUFFIX))
+        if self.dlg.checkBox_imageFeature.isChecked():
+            self.features.append(ImageFeature(IMAGE_FEATURE_SUFFIX))
+        if self.dlg.checkBox_placeFeature.isChecked():
+            self.features.append(DayFeature(DAY_SUFFIX))
+            self.features.append(PlaceFeature(PLACE_FEATURE_SUFFIX))
+
+
+    def calculate_features_seasonal_analysis(self):
+        self.dlg.hide()
+        self.create_features_array()
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_directory_seasonal.text(),
@@ -387,23 +405,25 @@ class Lumberjack:
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.calculate_features_task)
 
+        self.dlg.pushButton_boxplot.setEnabled(True)
+
 
     def plot_seasonal_analysis(self):
         self.dlg.hide()
         self.seasonal_analysis = SeasonalAnalysis(
             directory = self.dlg.lineEdit_directory_seasonal.text(),
-            feature = self.dlg.spinBox_feature.value(),
+            feature = self.dlg.comboBox_features.currentIndex(),
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.seasonal_analysis)
 
 
-    def notify_calculate_features(self, start_time, range, time):
-        self.dlg.spinBox_feature.setRange(1, range)
+    def notify_calculate_features(self, start_time, r, time):
+        self.dlg.comboBox_features.addItems([str(i) for i in range(1, r+1)])
         self.dlg.plainTextEdit.appendPlainText(
             "======== {} ========".format(str(start_time)))
         self.dlg.plainTextEdit.appendPlainText(
             "Finished features in {} seconds".format(str(time)))
-        self.dlg.pushButton_boxplot.setEnabled(True)
+        # self.dlg.pushButton_boxplot.setEnabled(True)
         # self.dlg.open()
 
 
@@ -420,21 +440,7 @@ class Lumberjack:
     def train(self):
         self.dlg.hide()
         self.classifier = Classifier()
-        self.features = []
-
-        if self.dlg.checkBox_bandsAlgebra.isChecked():
-            self.features.append(AlgebraFeature())
-        if self.dlg.checkBox_medianFilter.isChecked():
-            self.features.append(FilterFeature())
-            self.features.append(FilterGaussFeature())
-        if self.dlg.checkBox_ndvi.isChecked():
-            self.features.append(NdviFeature())
-        if self.dlg.checkBox_textures.isChecked():
-            self.features.append(TextureFeature())
-        if self.dlg.checkBox_dem.isChecked():
-            self.features.append(DayFeature())
-            self.features.append(DemTextureFeature())
-
+        self.create_features_array()
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_trainingDirectory.text(),
@@ -462,19 +468,7 @@ class Lumberjack:
 
     def test(self):
         self.dlg.hide()
-        self.features = []
-        if self.dlg.checkBox_bandsAlgebra.isChecked():
-            self.features.append(AlgebraFeature())
-        if self.dlg.checkBox_medianFilter.isChecked():
-            self.features.append(FilterFeature())
-            self.features.append(FilterGaussFeature())
-        if self.dlg.checkBox_ndvi.isChecked():
-            self.features.append(NdviFeature())
-        if self.dlg.checkBox_textures.isChecked():
-            self.features.append(TextureFeature())
-        if self.dlg.checkBox_dem.isChecked():
-            self.features.append(DayFeature())
-            self.features.append(DemTextureFeature())
+        self.create_features_array()
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_testingDirectory.text(),
@@ -494,19 +488,7 @@ class Lumberjack:
 
     def predict(self):
         self.dlg.hide()
-        self.features = []
-        if self.dlg.checkBox_bandsAlgebra.isChecked():
-            self.features.append(AlgebraFeature())
-        if self.dlg.checkBox_medianFilter.isChecked():
-            self.features.append(FilterFeature())
-            self.features.append(FilterGaussFeature())
-        if self.dlg.checkBox_ndvi.isChecked():
-            self.features.append(NdviFeature())
-        if self.dlg.checkBox_textures.isChecked():
-            self.features.append(TextureFeature())
-        if self.dlg.checkBox_dem.isChecked():
-            self.features.append(DayFeature())
-            self.features.append(DemTextureFeature())
+        self.create_features_array()
 
         self.calculate_features_task = CalculateFeaturesTask(
             directory = self.dlg.lineEdit_predictionDirectoy.text(),
@@ -537,8 +519,8 @@ class Lumberjack:
         self.dlg.open()
 
 
-    def notify_testing(self, start_time, classes,
-                       total_samples, metrics, time):
+    def notify_testing(self, start_time, classes, total_samples, metrics,
+                       time):
         self.dlg.plainTextEdit.appendPlainText(
             "======== {} ========".format(str(start_time)))
         if (not classes is None):

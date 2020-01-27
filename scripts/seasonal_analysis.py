@@ -25,11 +25,11 @@ class SeasonalAnalysis(PreProcessTask):
 
 
     def get_date_from_metadata(self, file):
-        f = open(file, 'r')
-        for line in f.readlines():
-            if "DATE_ACQUIRED =" in line:
-                l = line.split("=")
-                return l[1]
+        with open(file, 'r') as f:
+            for line in f.readlines():
+                if "DATE_ACQUIRED =" in line:
+                    l = line.split("=")
+                    return l[1]
 
 
     def calculate_threshold(self):

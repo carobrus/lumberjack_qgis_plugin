@@ -33,7 +33,7 @@ class CalculateFeaturesTask(PreProcessTask):
                             image.base_name, "_stack.tif"))
                     files = [os.path.join(
                         image.path, "{}_sr{}".format(
-                            image.base_name, MERGED_SUFFIX))]
+                            image.base_name, Lumberjack.MERGED_SUFFIX))]
                     for feature in self.features:
                         files.append(
                             feature.get_file_name(image.path, image.base_name))

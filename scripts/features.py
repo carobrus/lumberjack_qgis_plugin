@@ -8,54 +8,57 @@ from osgeo import gdal
 from . import bands_algebra
 from . import filters
 from . import ndvi
-
-
-ALGEBRA_SUFFIX = "_alge.tif"
-FILTER_SUFFIX = "_filt.tif"
-GAUSS_SUFFIX = "_gaus.tif"
-NDVI_SUFFIX =  "_ndvi.tif"
-DAY_SUFFIX = "_day.tif"
-TEXTURES_SUFFIX = "_text.tif"
-IMAGE_METADATA_SUFFIX = "_MTL.txt"
+from .. import Lumberjack
 
 
 class Feature:
     # Parent class which defines a common interface for all features
+    SUFFIX = ""
     def __init__(self):
         self.feature_names = []
 
 
-    def execute(self, file_in):
-        raise NotImplementedError("Subclasses mut override execute()")
+    def get_file_name(self, path, base_name):
+        raise NotImplementedError("Subclasses must override get_file_name()")
+
+
+    def execute(self, file_in, path, base_name):
+        raise NotImplementedError("Subclasses must override execute()")
 
 
 class AlgebraFeature(Feature):
-    def __init__(self):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        AlgebraFeature.SUFFIX = suffix
         self.feature_names = ["mean", "std", "slope", "intercept"]
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, ALGEBRA_SUFFIX))
+        return os.path.join(path, "{}_sr{}".format(base_name, AlgebraFeature.SUFFIX))
 
 
-    def execute(self, file_in):
-        file_out = file_in[:-11]
+    def execute(self, file_in, path, base_name):
+        file_out = self.get_file_name(path, base_name)
         bands_algebra.generate_algebra_file(file_in, file_out)
 
 
 class FilterFeature(Feature):
-    def __init__(self):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        FilterFeature.SUFFIX = suffix
         self.feature_names = []
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, FILTER_SUFFIX))
+        return os.path.join(path, "{}_sr{}".format(base_name, FilterFeature.SUFFIX))
 
 
-    def execute(self, file_in):
-        file_out = file_out = file_in[:-11]
+    def execute(self, file_in, path, base_name):
+        file_out = self.get_file_name(path, base_name)
         band_count = filters.generate_filter_file(
             file_input=file_in, file_output_median=file_out)
         if (not self.feature_names):
@@ -64,17 +67,20 @@ class FilterFeature(Feature):
 
 
 class FilterGaussFeature(Feature):
-    def __init__(self):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        FilterGaussFeature.SUFFIX = suffix
         self.feature_names = []
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, GAUSS_SUFFIX))
+        return os.path.join(path, "{}_sr{}".format(base_name, FilterGaussFeature.SUFFIX))
 
 
-    def execute(self, file_in):
-        file_out = file_in[:-11]
+    def execute(self, file_in, path, base_name):
+        file_out = self.get_file_name(path, base_name)
         band_count = filters.generate_filter_file(
             file_input=file_in, file_output_gaussian=file_out)
         if (not self.feature_names):
@@ -83,34 +89,40 @@ class FilterGaussFeature(Feature):
 
 
 class NdviFeature(Feature):
-    def __init__(self):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        NdviFeature.SUFFIX = suffix
         self.feature_names = ["ndvi"]
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, NDVI_SUFFIX))
+        return os.path.join(path, "{}_sr{}".format(base_name, NdviFeature.SUFFIX))
 
 
-    def execute(self, file_in):
-        file_out = file_in[:-11]
+    def execute(self, file_in, path, base_name):
+        file_out = self.get_file_name(path, base_name)
         ndvi.generate_ndvi_file(file_in, file_out)
 
 
 class DayFeature(Feature):
-    def __init__(self):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        DayFeature.SUFFIX = suffix
         self.feature_names = ["day_normalized", "day_transform"]
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}_sr{}".format(base_name, DAY_SUFFIX))
+        return os.path.join(path, "{}_sr{}".format(base_name, DayFeature.SUFFIX))
 
 
-    def execute(self, file_in):
-        file_out = file_in[:-11]
+    def execute(self, file_in, path, base_name):
+        file_out = self.get_file_name(path, base_name)
         file_name_metadata = "{}{}".format(
-            file_in[:-14], IMAGE_METADATA_SUFFIX)
+            file_in[:-14], Lumberjack.IMAGE_METADATA_SUFFIX)
         date = self.get_date_from_metadata(file_name_metadata)
         row = int(self.get_row_from_metadata(file_name_metadata))
         number_of_day = self.transform_day(date, row)
@@ -155,56 +167,62 @@ class DayFeature(Feature):
 
 
     def get_date_from_metadata(self, file):
-        f = open(file, 'r')
-        for line in f.readlines():
-            if "DATE_ACQUIRED =" in line:
-                l = line.split("=")
-                return l[1]
+        with open(file, 'r') as f:
+            for line in f.readlines():
+                if "DATE_ACQUIRED =" in line:
+                    l = line.split("=")
+                    return l[1]
 
 
     def get_row_from_metadata(self, file):
-        f = open(file, 'r')
-        for line in f.readlines():
-            if "WRS_ROW =" in line:
-                l = line.split("=")
-                return l[1]
+        with open(file, 'r') as f:
+            for line in f.readlines():
+                if "WRS_ROW =" in line:
+                    l = line.split("=")
+                    return l[1]
 
 
-class TextureFeature(Feature):
-    def __init__(self):
+class ImageFeature(Feature):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        ImageFeature.SUFFIX = suffix
         self.feature_names = []
 
 
     def get_file_name(self, path, base_name):
-        return os.path.join(path, "{}{}".format(base_name, TEXTURES_SUFFIX))
+        return os.path.join(path, "{}{}".format(base_name, ImageFeature.SUFFIX))
 
 
-    def execute(self, file_in):
+    def execute(self, file_in, path, base_name):
         if (not self.feature_names):
-            dataset = gdal.Open("{}{}".format(file_in[:-14], TEXTURES_SUFFIX), gdal.GA_ReadOnly)
+            dataset = gdal.Open("{}{}".format(file_in[:-14], ImageFeature.SUFFIX), gdal.GA_ReadOnly)
             self.feature_names = (
                 [dataset.GetRasterBand(i).GetDescription() for i in range(1, dataset.RasterCount+1)])
 
 
-class DemTextureFeature(Feature):
-    def __init__(self):
+class PlaceFeature(Feature):
+    SUFFIX = ""
+
+    def __init__(self, suffix):
         super().__init__()
+        PlaceFeature.SUFFIX = suffix
         self.feature_names = []
 
 
     def get_file_name(self, path, base_name):
         dir_dem_text = os.path.split(path)[0]
         for file in os.listdir(dir_dem_text):
-            if file.endswith("_text.tif"):
+            if file.endswith(PlaceFeature.SUFFIX):
                 return os.path.join(dir_dem_text, file)
 
 
-    def execute(self, file_in):
+    def execute(self, file_in, path, base_name):
         if (not self.feature_names):
             dir_dem_text = os.path.split(os.path.split(file_in)[0])[0]
             for file in os.listdir(dir_dem_text):
-                if file.endswith("_text.tif"):
+                if file.endswith(PlaceFeature.SUFFIX):
                     file_dem_text = os.path.join(dir_dem_text, file)
 
                     dataset = gdal.Open(file_dem_text, gdal.GA_ReadOnly)

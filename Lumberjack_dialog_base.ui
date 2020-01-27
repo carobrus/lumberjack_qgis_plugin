@@ -134,7 +134,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_textures">
+               <widget class="QCheckBox" name="checkBox_imageFeature">
                 <property name="text">
                  <string>Textures</string>
                 </property>
@@ -144,7 +144,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_dem">
+               <widget class="QCheckBox" name="checkBox_placeFeature">
                 <property name="enabled">
                  <bool>true</bool>
                 </property>
@@ -497,17 +497,30 @@ Importances</string>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_feature_number">
             <property name="spacing">
-             <number>0</number>
+             <number>6</number>
             </property>
             <item>
              <widget class="QLabel" name="label_seasonal_analysis">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Feature to Analyze</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox_feature"/>
+             <widget class="QComboBox" name="comboBox_features">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -720,8 +733,8 @@ Importances</string>
   <tabstop>checkBox_bandsAlgebra</tabstop>
   <tabstop>checkBox_medianFilter</tabstop>
   <tabstop>checkBox_ndvi</tabstop>
-  <tabstop>checkBox_textures</tabstop>
-  <tabstop>checkBox_dem</tabstop>
+  <tabstop>checkBox_imageFeature</tabstop>
+  <tabstop>checkBox_placeFeature</tabstop>
   <tabstop>pushButton_feature_importances</tabstop>
   <tabstop>lineEdit_trainingDirectory</tabstop>
   <tabstop>pushButton_trainingDirectory</tabstop>
@@ -738,7 +751,6 @@ Importances</string>
   <tabstop>lineEdit_directory_seasonal</tabstop>
   <tabstop>pushButton_seasonal</tabstop>
   <tabstop>pushButton_calculate_features</tabstop>
-  <tabstop>spinBox_feature</tabstop>
   <tabstop>pushButton_boxplot</tabstop>
   <tabstop>lineEdit_dem</tabstop>
   <tabstop>pushButton_search_dem</tabstop>

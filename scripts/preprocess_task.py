@@ -12,17 +12,6 @@ from .classifier import Classifier
 from .. import Lumberjack
 
 
-IMAGE_METADATA_SUFFIX = "_MTL.txt"
-EXTENSION_FILE_SUFFIX = "_reg.tif"
-DEM_TEXTURES_SUFFIX = "_text.tif"
-TEXTURES_SUFFIX = "_text.tif"
-CROP_SUFFIX = "_crop.tif"
-MERGED_SUFFIX = "_merged.tif"
-SHAPEFILE_SUFFIX = "_roi.shp"
-MASK_SUFFIX = "_mask.tif"
-BAND_TOTAL = 7
-
-
 class PreProcessTask(QgsTask):
 
     def obtain_places(self, root_directory):
@@ -41,18 +30,18 @@ class PreProcessTask(QgsTask):
                         image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
                             image_subfile_path = str(image_subfile.path).replace("\\", "/")
-                            if (image_subfile_path[-(len(IMAGE_METADATA_SUFFIX)):] == IMAGE_METADATA_SUFFIX):
+                            if (image_subfile_path[-(len(Lumberjack.IMAGE_METADATA_SUFFIX)):] == Lumberjack.IMAGE_METADATA_SUFFIX):
                                 image.base_name = image_subfile_path[-48:-8]
                         place.images.append(image)
                     elif (img_directory_or_file.is_file()):
                         file_path = str(img_directory_or_file.path).replace("\\", "/")
-                        if (file_path[-(len(EXTENSION_FILE_SUFFIX)):] ==
-                                EXTENSION_FILE_SUFFIX):
+                        if (file_path[-(len(Lumberjack.EXTENSION_FILE_SUFFIX)):] ==
+                                Lumberjack.EXTENSION_FILE_SUFFIX):
                             place.extension_file_path = file_path
-                        elif (file_path[-(len(SHAPEFILE_SUFFIX)):] ==
-                                SHAPEFILE_SUFFIX):
+                        elif (file_path[-(len(Lumberjack.SHAPEFILE_SUFFIX)):] ==
+                                Lumberjack.SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
-                        elif (file_path[-(len(MASK_SUFFIX)):] == MASK_SUFFIX):
+                        elif (file_path[-(len(Lumberjack.MASK_SUFFIX)):] == Lumberjack.MASK_SUFFIX):
                             place.mask = file_path
                 places.append(place)
         return places
@@ -71,7 +60,7 @@ class PreProcessTask(QgsTask):
     def crop_images(self, file_name_band, file_name_crop,
                     minx, maxy, maxx, miny):
         # Crops all images according to the extension.
-        for i in range(1, BAND_TOTAL+1):
+        for i in range(1, Lumberjack.BAND_TOTAL + 1):
             # Crop image to extension
             command_translate = ("gdal_translate -projwin {} {} {} {} "
                                  "-ot Int16 -of GTiff \"{}\" \"{}\"")
@@ -123,9 +112,9 @@ class PreProcessTask(QgsTask):
                 file_name_band = os.path.join(
                     image.path, "{}_sr_band{}.tif".format(image.base_name, "{}"))
                 file_name_crop = os.path.join(
-                    image.path, "{}_sr_band{}{}".format(image.base_name, "{}", CROP_SUFFIX))
+                    image.path, "{}_sr_band{}{}".format(image.base_name, "{}", Lumberjack.CROP_SUFFIX))
                 file_name_merged = os.path.join(
-                    image.path, "{}_sr{}".format(image.base_name, MERGED_SUFFIX))
+                    image.path, "{}_sr{}".format(image.base_name, Lumberjack.MERGED_SUFFIX))
 
                 # Crop all bands according to the extent file
                 self.crop_images(
@@ -133,20 +122,21 @@ class PreProcessTask(QgsTask):
 
                 # Merge all bands
                 files_to_merge = []
-                for i in range(1, BAND_TOTAL+1):
+                for i in range(1, Lumberjack.BAND_TOTAL + 1):
                     files_to_merge.append(file_name_crop.format(i))
                 self.merge_images(files_to_merge, file_name_merged,
-                                  BAND_TOTAL, gdal.GDT_Int16)
+                                  Lumberjack.BAND_TOTAL, gdal.GDT_Int16)
                 for file in files_to_merge:
                     if os.path.exists(file):
                         os.remove(file)
 
                 for feature in self.features:
-                    feature.execute(file_name_merged)
+                    feature.execute(file_name_merged, image.path, image.base_name)
 
 
     def __init__(self, description, task):
         super().__init__(description, task)
+        self.exception = None
 
 
     def run(self):
