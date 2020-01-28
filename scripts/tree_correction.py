@@ -9,8 +9,7 @@ from .. import Lumberjack
 
 
 class TreeCorrectionTask(QgsTask):
-    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount,
-                 smooth_it, lumberjack_instance):
+    def __init__(self, dem_file, tree_mask_file, output_file, dilate_amount, smooth_it, lumberjack_instance):
         super().__init__("Tree Correction",  QgsTask.CanCancel)
         self.dem = dem_file
         self.tree_mask = tree_mask_file
@@ -39,8 +38,7 @@ class TreeCorrectionTask(QgsTask):
             # Create a copy of the DEM
             memory_driver = gdal.GetDriverByName('GTiff')
             output_dataset = memory_driver.Create(
-                self.output_file, dataset_dem.RasterXSize,
-                dataset_dem.RasterYSize, 1, gdal.GDT_Int16)
+                self.output_file, dataset_dem.RasterXSize, dataset_dem.RasterYSize, 1, gdal.GDT_Int16)
             output_dataset.SetProjection(dataset_dem.GetProjectionRef())
             output_dataset.SetGeoTransform(dataset_dem.GetGeoTransform())
             outband = output_dataset.GetRasterBand(1)
@@ -57,17 +55,14 @@ class TreeCorrectionTask(QgsTask):
             array_mask = np.array(array_mask - 1, dtype=bool)
             if self.dilate_amount != 0:
                 array_mask = np.invert(array_mask)
-                array_mask = ndimage.binary_dilation(
-                    array_mask, iterations=self.dilate_amount)
+                array_mask = ndimage.binary_dilation(array_mask, iterations=self.dilate_amount)
                 array_mask = np.invert(array_mask)
-            # array_mask[array_mask==1] = 0
 
             # Create mask File
             memory_driver = gdal.GetDriverByName('GTiff')
             output_dataset = memory_driver.Create(
-                self.tree_mask[:-4] + "_no_data.tif",
-                dataset_mask.RasterXSize, dataset_mask.RasterYSize, 1,
-                gdal.GDT_Byte)
+                self.tree_mask[:-4] + "_no_data.tif", 
+                dataset_mask.RasterXSize, dataset_mask.RasterYSize, 1, gdal.GDT_Byte)
             output_dataset.SetProjection(dataset_mask.GetProjectionRef())
             output_dataset.SetGeoTransform(dataset_mask.GetGeoTransform())
             outband = output_dataset.GetRasterBand(1)
@@ -78,15 +73,12 @@ class TreeCorrectionTask(QgsTask):
             # Open copy file and mask
             dataset_dem = gdal.Open(self.output_file, gdal.GA_Update)
             dem_raster_band = dataset_dem.GetRasterBand(1)
-            dataset_mask = gdal.Open(
-                self.tree_mask[:-4] + "_no_data.tif", gdal.GA_ReadOnly)
+            dataset_mask = gdal.Open(self.tree_mask[:-4] + "_no_data.tif", gdal.GA_ReadOnly)
             mask_raster_band = dataset_mask.GetRasterBand(1)
 
             result = gdal.FillNodata(
-                targetBand = dem_raster_band,
-                maskBand = mask_raster_band,
-                maxSearchDist = 10,
-                smoothingIterations = self.smooth_it
+                targetBand = dem_raster_band, maskBand = mask_raster_band,
+                maxSearchDist = 10, smoothingIterations = self.smooth_it
             )
             dataset_dem = None
             dataset_mask = None
@@ -109,10 +101,7 @@ class TreeCorrectionTask(QgsTask):
                 'Task "{name}" completed in {time} seconds\n' \
                 'DEM file: {dem}\n' \
                 'Tree Mask file: {tm}'.format(
-                    name=self.description(),
-                    time=self.elapsed_time,
-                    dem=self.dem,
-                    tm=self.tree_mask),
+                    name=self.description(), time=self.elapsed_time, dem=self.dem, tm=self.tree_mask),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
 
             self.lumberjack_instance.notify_tree_correction(
@@ -123,21 +112,17 @@ class TreeCorrectionTask(QgsTask):
                 QgsMessageLog.logMessage(
                     'Task "{name}" not successful but without '\
                     'exception (probably the task was manually '\
-                    'canceled by the user)'.format(
-                        name=self.description()),
+                    'canceled by the user)'.format(name=self.description()),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
-                    'Task "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
+                    'Task "{name}" Exception: {exception}'.format(name=self.description(), exception=self.exception),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception
 
 
     def cancel(self):
         QgsMessageLog.logMessage(
-            'Task "{name}" was canceled'.format(
-                name=self.description()),
+            'Task "{name}" was canceled'.format(name=self.description()),
             Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()

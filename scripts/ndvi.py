@@ -23,22 +23,21 @@ def calculate_ndvi(dataset):
     image[:, :, b_nir] = band.ReadAsArray()
 
     # NDVI = (NIR - Red) / (NIR + Red)
-    ndvi = ((image[:, :, b_nir] - image[:, :, b_red]) /
-        (image[:, :, b_red] + image[:, :, b_nir]))
+    ndvi = ((image[:, :, b_nir] - image[:, :, b_red]) / (image[:, :, b_red] + image[:, :, b_nir]))
     return ndvi
 
 
 def output_tiff(dataset, ndvi, file_output):
     memory_driver = gdal.GetDriverByName('GTiff')
     out_raster_ds = memory_driver.Create(
-        file_output, dataset.RasterXSize,
-        dataset.RasterYSize, 1, gdal.GDT_Float32)
+        file_output, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Float32)
     # Set projection taken from the original image and also set GeoTransform,
     # which defines the position of the top left pixel, among
     # with the resolution and orientation. It's taken from the original image.
     out_raster_ds.SetProjection(dataset.GetProjectionRef())
     out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
     outband = out_raster_ds.GetRasterBand(1)
+    outband.SetDescription("ndvi")
     outband.WriteArray(ndvi)
     outband.FlushCache()
     out_raster_ds = None

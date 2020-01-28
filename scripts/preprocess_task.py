@@ -19,6 +19,9 @@ class PreProcessTask(QgsTask):
         # do the processing.
         # Creates an structure with the Place and Image data objects so it's
         # easy to iterate, access files and improves readability
+        suf_b1 = Lumberjack.BAND_SUFFIX.format("1")
+        suf_metadata = Lumberjack.IMAGE_METADATA_SUFFIX
+
         root_directory = os.path.normpath(root_directory)
         places = []
         for place_directory in os.scandir(root_directory):
@@ -31,19 +34,17 @@ class PreProcessTask(QgsTask):
                         image = Image(image_directory)
                         for image_subfile in os.scandir(image_directory):
                             image_subfile_path = str(image_subfile.path)
-                            if (image_subfile_path[-(len(Lumberjack.BAND_SUFFIX.format("1"))):] == Lumberjack.BAND_SUFFIX.format("1")):
+                            if (image_subfile_path[-(len(suf_b1)):] == suf_b1):
                                 # image.base_name = image_subfile_path[-48:-8]
-                                image.base_name = (os.path.split(image_subfile_path)[1])[:-(len(Lumberjack.BAND_SUFFIX.format("1")))]
-                            if (image_subfile_path[-(len(Lumberjack.IMAGE_METADATA_SUFFIX)):] == Lumberjack.IMAGE_METADATA_SUFFIX):
+                                image.base_name = (os.path.split(image_subfile_path)[1])[:-(len(suf_b1))]
+                            if (image_subfile_path[-(len(suf_metadata)):] == suf_metadata):
                                 image.metadata_file = image_subfile_path
                         place.images.append(image)
                     elif (img_directory_or_file.is_file()):
                         file_path = str(img_directory_or_file.path)
-                        if (file_path[-(len(Lumberjack.EXTENSION_FILE_SUFFIX)):] ==
-                                Lumberjack.EXTENSION_FILE_SUFFIX):
+                        if (file_path[-(len(Lumberjack.EXTENSION_FILE_SUFFIX)):] == Lumberjack.EXTENSION_FILE_SUFFIX):
                             place.extension_file_path = file_path
-                        elif (file_path[-(len(Lumberjack.SHAPEFILE_SUFFIX)):] ==
-                                Lumberjack.SHAPEFILE_SUFFIX):
+                        elif (file_path[-(len(Lumberjack.SHAPEFILE_SUFFIX)):] == Lumberjack.SHAPEFILE_SUFFIX):
                             place.vector_file_path = file_path
                         elif (file_path[-(len(Lumberjack.MASK_SUFFIX)):] == Lumberjack.MASK_SUFFIX):
                             place.mask = file_path
@@ -61,17 +62,14 @@ class PreProcessTask(QgsTask):
         return minx, maxy, maxx, miny
 
 
-    def crop_images(self, file_name_band, file_name_crop,
-                    minx, maxy, maxx, miny):
+    def crop_images(self, file_name_band, file_name_crop, minx, maxy, maxx, miny):
         # Crops all images according to the extension.
         for i in range(1, Lumberjack.BAND_TOTAL + 1):
             # Crop image to extension
-            command_translate = ("gdal_translate -projwin {} {} {} {} "
-                                 "-ot Int16 -of GTiff \"{}\" \"{}\"")
+            command_translate = ("gdal_translate -projwin {} {} {} {} -ot Int16 -of GTiff \"{}\" \"{}\"")
             subprocess.call(command_translate.format(
                 minx, maxy, maxx, miny, file_name_band.format(i),
-                file_name_crop.format(i)), stdout=open(os.devnull, 'wb'),
-                shell=True)
+                file_name_crop.format(i)), stdout=open(os.devnull, 'wb'), shell=True)
 
 
     def merge_images(self, files, file_name_merged, bands_amount, data_type):
@@ -82,8 +80,7 @@ class PreProcessTask(QgsTask):
         dataset = gdal.Open(files[0], gdal.GA_ReadOnly)
         driver = gdal.GetDriverByName('GTiff')
         output_dataset = driver.Create(
-            file_name_merged, dataset.RasterXSize, dataset.RasterYSize,
-            bands_amount, data_type)
+            file_name_merged, dataset.RasterXSize, dataset.RasterYSize, bands_amount, data_type)
         output_dataset.SetGeoTransform(dataset.GetGeoTransform())
         output_dataset.SetProjection(dataset.GetProjection())
         dataset = None
@@ -94,6 +91,7 @@ class PreProcessTask(QgsTask):
                 bands_acum += 1
                 band_read = dataset.GetRasterBand(j+1).ReadAsArray()
                 outband = output_dataset.GetRasterBand(bands_acum)
+                outband.SetDescription(dataset.GetRasterBand(j+1).GetDescription())
                 outband.WriteArray(band_read)
 
 
@@ -113,22 +111,18 @@ class PreProcessTask(QgsTask):
                 # image represent each landsat image (a folder with the bands)
                 print("Landsat image directory: {}".format(image.path))
 
-                file_name_band = os.path.join(
-                    image.path, "{}{}".format(image.base_name, Lumberjack.BAND_SUFFIX))
+                file_name_band = os.path.join(image.path, "{}{}".format(image.base_name, Lumberjack.BAND_SUFFIX))
                 file_name_crop = "{}{}".format(file_name_band[:-4], Lumberjack.CROP_SUFFIX)
-                file_name_merged = os.path.join(
-                    image.path, "{}{}".format(image.base_name, Lumberjack.MERGED_SUFFIX))
+                file_name_merged = os.path.join(image.path, "{}{}".format(image.base_name, Lumberjack.MERGED_SUFFIX))
 
                 # Crop all bands according to the extent file
-                self.crop_images(
-                    file_name_band, file_name_crop, minx, maxy, maxx, miny)
+                self.crop_images(file_name_band, file_name_crop, minx, maxy, maxx, miny)
 
                 # Merge all bands
                 files_to_merge = []
                 for i in range(1, Lumberjack.BAND_TOTAL + 1):
                     files_to_merge.append(file_name_crop.format(i))
-                self.merge_images(files_to_merge, file_name_merged,
-                                  Lumberjack.BAND_TOTAL, gdal.GDT_Int16)
+                self.merge_images(files_to_merge, file_name_merged, Lumberjack.BAND_TOTAL, gdal.GDT_Int16)
                 for file in files_to_merge:
                     if os.path.exists(file):
                         os.remove(file)
@@ -167,7 +161,6 @@ class PreProcessTask(QgsTask):
 
     def cancel(self):
         QgsMessageLog.logMessage(
-            'Task "{name}" was canceled'.format(
-                name=self.description()),
+            'Task "{name}" was canceled'.format(name=self.description()),
             Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()

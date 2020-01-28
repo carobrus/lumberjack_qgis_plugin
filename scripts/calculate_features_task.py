@@ -32,18 +32,13 @@ class CalculateFeaturesTask(PreProcessTask):
                     file_name_stack = os.path.join(
                         image.path, "{}{}".format(
                             image.base_name, Lumberjack.STACK_SUFFIX))
-                    # files = [os.path.join(
-                    #     image.path, "{}_sr{}".format(
-                    #         image.base_name, Lumberjack.MERGED_SUFFIX))]
+                    
                     files = []
                     for feature in self.features:
-                        files.append(
-                            feature.get_file_name(image))
+                        files.append(feature.get_file_name(image))
 
                     self.total_features = self.calculate_total_features(files)
-                    self.merge_images(
-                        files, file_name_stack,
-                        self.total_features, gdal.GDT_Float32)
+                    self.merge_images(files, file_name_stack, self.total_features, gdal.GDT_Float32)
             
             for feature in self.features:
                 self.feature_names.extend(feature.feature_names)
@@ -62,8 +57,7 @@ class CalculateFeaturesTask(PreProcessTask):
 
     def cancel(self):
         QgsMessageLog.logMessage(
-            'Task "{name}" was canceled'.format(
-                name=self.description()),
+            'Task "{name}" was canceled'.format(name=self.description()),
             Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
 
@@ -72,26 +66,20 @@ class CalculateFeaturesTask(PreProcessTask):
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
-                'Directory: {td}'.format(
-                    name=self.description(),
-                    time=self.elapsed_time,
-                    td=self.directory),
+                'Directory: {td}'.format(name=self.description(), time=self.elapsed_time, td=self.directory),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
             self.lumberjack_instance.notify_calculate_features(
                 self.start_time_str, self.total_features,
-                self.feature_names, self.elapsed_time)
+                self.feature_names, self.directory, self.elapsed_time)
         else:
             if self.exception is None:
                 QgsMessageLog.logMessage(
                     'Task "{name}" not successful but without '\
                     'exception (probably the task was manually '\
-                    'canceled by the user)'.format(
-                        name=self.description()),
+                    'canceled by the user)'.format(name=self.description()),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
-                    'Task "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
+                    'Task "{name}" Exception: {exception}'.format(name=self.description(), exception=self.exception),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception

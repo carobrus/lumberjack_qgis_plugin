@@ -770,6 +770,7 @@ Importances</string>
   <tabstop>lineEdit_directory_seasonal</tabstop>
   <tabstop>pushButton_seasonal</tabstop>
   <tabstop>pushButton_calculate_features</tabstop>
+  <tabstop>comboBox_features</tabstop>
   <tabstop>pushButton_boxplot</tabstop>
   <tabstop>lineEdit_dem</tabstop>
   <tabstop>pushButton_search_dem</tabstop>

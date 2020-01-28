@@ -1,8 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout
-from PyQt5.QtWidgets import QSizePolicy, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget
 from PyQt5 import QtGui
-from matplotlib.backends.backend_qt5agg import (
-    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,8 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout
-from PyQt5.QtWidgets import QSizePolicy, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget
 from PyQt5 import QtGui
-from matplotlib.backends.backend_qt5agg import (
-    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
 
@@ -24,9 +22,7 @@ class PlotWindow(QMainWindow):
         self.resize(self.width, self.height)
         # self.setFixedSize(self.width, self.height)
         layout = QtGui.QVBoxLayout()
-        self.plot_canvas = PlotCanvas(self,
-            feature_importances=self.feature_importances,
-            labels=self.labels)
+        self.plot_canvas = PlotCanvas(self, feature_importances=self.feature_importances, labels=self.labels)
         layout.addWidget(self.plot_canvas)
         widget = QWidget()
         widget.setLayout(layout)
@@ -35,8 +31,7 @@ class PlotWindow(QMainWindow):
 
 
 class PlotCanvas(FigureCanvas):
-    def __init__(self, parent=None, dpi=100, feature_importances=None,
-                 labels=None):
+    def __init__(self, parent=None, dpi=100, feature_importances=None, labels=None):
         self.fig = Figure(dpi=dpi)
         self.axes = self.fig.add_subplot(111)
         FigureCanvas.__init__(self, self.fig)

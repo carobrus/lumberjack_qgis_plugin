@@ -45,12 +45,16 @@ def obtain_features(dataset, file_output):
     outRaster.SetProjection(dataset.GetProjection())
     # For each array, a band is written
     outband = outRaster.GetRasterBand(1)
+    outband.SetDescription("mean")
     outband.WriteArray(mean)
     outband = outRaster.GetRasterBand(2)
+    outband.SetDescription("std")
     outband.WriteArray(std)
     outband = outRaster.GetRasterBand(3)
+    outband.SetDescription("slope")
     outband.WriteArray(m)
     outband = outRaster.GetRasterBand(4)
+    outband.SetDescription("intercept")
     outband.WriteArray(c)
     outband.FlushCache()
     outRaster = None
@@ -66,18 +70,15 @@ def generate_algebra_file(file_input, file_output):
     obtain_features(dataset, file_output)
 
     elapsed_time = time.time() - start_time
-    print("Finished generating mean, std and fitted line features in "
-          + str(elapsed_time) + " seconds")
+    print("Finished generating mean, std and fitted line features in " + str(elapsed_time) + " seconds")
 
 
 if __name__== "__main__":
     parser = ArgumentParser()
-    parser.add_argument(
-        "-i", "--input_file", dest="file_input",
-        help="Input tiff file to perform filters", required=True)
-    parser.add_argument(
-        "-o", "--output_file", dest="file_output",
-        help="Output tiff file to save the image filtered", required=True)
+    parser.add_argument("-i", "--input_file", dest="file_input", 
+                        help="Input tiff file to perform filters", required=True)
+    parser.add_argument("-o", "--output_file", dest="file_output", 
+                        help="Output tiff file to save the image filtered", required=True)
 
     args = parser.parse_args()
     generate_algebra_file(args.file_input, args.file_output)

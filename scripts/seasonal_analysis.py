@@ -19,8 +19,7 @@ class SeasonalAnalysis(PreProcessTask):
         year = int(year)
         month = int(month)
         day = int(day)
-        number_of_day = (datetime.date(year, month, day) -
-                         datetime.date(year, 1, 1)).days + 1
+        number_of_day = (datetime.date(year, month, day) - datetime.date(year, 1, 1)).days + 1
         return number_of_day
 
 
@@ -40,8 +39,7 @@ class SeasonalAnalysis(PreProcessTask):
         for place in places:
             if (place.mask != ""):
                 mask = gdal.Open(place.mask, gdal.GA_ReadOnly)
-                mask_array = mask.GetRasterBand(1).ReadAsArray().astype(
-                    np.uint8)
+                mask_array = mask.GetRasterBand(1).ReadAsArray().astype(np.uint8)
 
                 stack_files = []
                 for image in place.images:
@@ -86,8 +84,7 @@ class SeasonalAnalysis(PreProcessTask):
 
     def cancel(self):
         QgsMessageLog.logMessage(
-            'Task "{name}" was canceled'.format(
-                name=self.description()),
+            'Task "{name}" was canceled'.format(name=self.description()),
             Lumberjack.MESSAGE_CATEGORY, Qgis.Info)
         super().cancel()
 
@@ -96,10 +93,7 @@ class SeasonalAnalysis(PreProcessTask):
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
-                'Directory: {td}'.format(
-                    name=self.description(),
-                    time=self.elapsed_time,
-                    td=self.directory),
+                'Directory: {td}'.format(name=self.description(), time=self.elapsed_time, td=self.directory),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
             self.lumberjack_instance.notify_seasonal_analysis(
                 self.start_time_str, self.data, self.days, self.elapsed_time)
@@ -108,13 +102,10 @@ class SeasonalAnalysis(PreProcessTask):
                 QgsMessageLog.logMessage(
                     'Task "{name}" not successful but without '\
                     'exception (probably the task was manually '\
-                    'canceled by the user)'.format(
-                        name=self.description()),
+                    'canceled by the user)'.format(name=self.description()),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
-                    'Task "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
+                    'Task "{name}" Exception: {exception}'.format(name=self.description(), exception=self.exception),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception

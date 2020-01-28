@@ -22,8 +22,7 @@ def median_filter(dataset, window_size):
         band = dataset.GetRasterBand(b + 1)
         # Calculate the filter using the band's data and asign to
         # the third dimension of the numpy array
-        img_filtered[:, :, b] = ndimage.filters.median_filter(
-            band.ReadAsArray(), size = (window_size, window_size))
+        img_filtered[:, :, b] = ndimage.filters.median_filter(band.ReadAsArray(), size = (window_size, window_size))
     return img_filtered
 
 
@@ -34,8 +33,7 @@ def gaussian_filter(dataset, sigma):
         band = dataset.GetRasterBand(b + 1)
         # Calculate the filter using the band's data and asign to
         # the third dimension of the numpy array
-        img_filtered[:, :, b] = ndimage.gaussian_filter(
-            band.ReadAsArray(), sigma=sigma)
+        img_filtered[:, :, b] = ndimage.gaussian_filter(band.ReadAsArray(), sigma=sigma)
     return img_filtered
 
 
@@ -57,8 +55,7 @@ def output_tiff(dataset, img_filtered, file_output):
     out_raster_ds = None
 
 
-def generate_filter_file(file_input, file_output_median=None,
-                         file_output_gaussian=None, window_size=4, sigma=1):
+def generate_filter_file(file_input, file_output_median=None, file_output_gaussian=None, window_size=4, sigma=1):
     start_time = time.time()
     print("Performing filters...")
     # Opens the gdal dataset
@@ -82,32 +79,25 @@ def generate_filter_file(file_input, file_output_median=None,
 def check_positive(value):
     ivalue = int(value)
     if ivalue <= 0:
-        raise argparse.ArgumentTypeError(
-            "%s is an invalid positive int value" % value)
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
 
 if __name__== "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "-i", "--input_file", dest="file_input",
-        help="Input tiff file to perform filters", required=True)
+        "-i", "--input_file", dest="file_input", help="Input tiff file to perform filters", required=True)
     parser.add_argument(
         "-om", "--output_file_median", dest="file_output_median",
-        help="Output tiff file to save the image filtered by median method",
-        required=False)
+        help="Output tiff file to save the image filtered by median method", required=False)
     parser.add_argument(
         "-og", "--output_file_gaussian", dest="file_output_gaussian",
-        help="Output tiff file to save the image filtered by gaussian method",
-        required=False)
+        help="Output tiff file to save the image filtered by gaussian method", required=False)
     parser.add_argument(
-        "-w", "--window_size", dest="window_size", type=check_positive,
-        help="Size of the window", required=False)
+        "-w", "--window_size", dest="window_size", type=check_positive, help="Size of the window", required=False)
     parser.add_argument(
         "-s", "--sigma", dest="sigma", type=check_positive,
         help="Standard deviation for Gaussian kernel", required=False)
 
     args = parser.parse_args()
-    generate_filter_file(
-        args.file_input, args.file_output_median,
-        args.file_output_gaussian, args.window_size, sigma)
+    generate_filter_file(args.file_input, args.file_output_median, args.file_output_gaussian, args.window_size, sigma)

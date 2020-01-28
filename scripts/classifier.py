@@ -34,13 +34,11 @@ class Classifier:
 
 
     def add_testing_samples(self,  X, y):
-        self.__X_test, self.__y_test = self.add_samples(
-            X, y, self.__X_test, self.__y_test)
+        self.__X_test, self.__y_test = self.add_samples(X, y, self.__X_test, self.__y_test)
 
 
     def add_training_samples(self, X, y):
-        self.__X_train, self.__y_train = self.add_samples(
-            X, y, self.__X_train, self.__y_train)
+        self.__X_train, self.__y_train = self.add_samples(X, y, self.__X_train, self.__y_train)
 
 
     def get_test_size(self):
@@ -50,12 +48,11 @@ class Classifier:
     def fit(self, test_size):
         if (test_size != 0):
             self.__X_train, self.__X_test, self.__y_train, self.__y_test = (
-                train_test_split(self.__X_train, self.__y_train,
-                                 test_size=test_size))
+                train_test_split(
+                    self.__X_train, self.__y_train, test_size=test_size))
 
         # Initializes model with n_estimators trees
-        # self.__rf = RandomForestClassifier(
-        #   n_estimators=500, oob_score=True, n_jobs=-1)
+        # self.__rf = RandomForestClassifier(n_estimators=500, oob_score=True, n_jobs=-1)
         self.__rf = RandomForestClassifier(n_estimators=100, bootstrap=False)
 
         print("Fitting model to training data...")
@@ -94,18 +91,14 @@ class Classifier:
 
     def predict_an_image(self, input_image, output_image):
         dataset = gdal.Open(input_image, gdal.GA_ReadOnly)
-        img_to_predict = np.zeros(
-            (dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount),
-            dtype=np.float32)
+        img_to_predict = np.zeros((dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount), dtype=np.float32)
         for band_number in range(dataset.RasterCount):
             band = dataset.GetRasterBand(band_number + 1)
             # Read in the band's data into the third dimension of our array
             img_to_predict[:, :, band_number] = band.ReadAsArray()
 
-        new_shape = (img_to_predict.shape[0] * img_to_predict.shape[1],
-            img_to_predict.shape[2])
-        img_as_array = (
-            img_to_predict[:, :, :dataset.RasterCount].reshape(new_shape))
+        new_shape = (img_to_predict.shape[0] * img_to_predict.shape[1], img_to_predict.shape[2])
+        img_as_array = (img_to_predict[:, :, :dataset.RasterCount].reshape(new_shape))
         print('Reshaped from {old_shape} to {new_shape}'.format(
             old_shape=img_to_predict.shape, new_shape=img_as_array.shape))
 
@@ -114,15 +107,12 @@ class Classifier:
         class_prediction = self.__rf.predict(img_as_array)
 
         # Reshape classification map
-        class_prediction = (
-            class_prediction.reshape(img_to_predict[:, :, 0].shape))
+        class_prediction = (class_prediction.reshape(img_to_predict[:, :, 0].shape))
 
         # Create the result tiff
         print("Creating output image...")
         memory_driver = gdal.GetDriverByName('GTiff')
-        out_raster_ds = memory_driver.Create(
-            output_image, dataset.RasterXSize,
-            dataset.RasterYSize, 1, gdal.GDT_Byte)
+        out_raster_ds = memory_driver.Create(output_image, dataset.RasterXSize, dataset.RasterYSize, 1, gdal.GDT_Byte)
         out_raster_ds.SetProjection(dataset.GetProjectionRef())
         out_raster_ds.SetGeoTransform(dataset.GetGeoTransform())
         outband = out_raster_ds.GetRasterBand(1)

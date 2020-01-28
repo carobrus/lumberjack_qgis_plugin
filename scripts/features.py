@@ -13,7 +13,6 @@ from .. import Lumberjack
 
 class Feature:
     # Parent class which defines a common interface for all features
-    SUFFIX = ""
     def __init__(self):
         self.feature_names = []
 
@@ -59,11 +58,9 @@ class FilterFeature(Feature):
 
     def execute(self, file_in, image):
         file_out = self.get_file_name(image)
-        band_count = filters.generate_filter_file(
-            file_input=file_in, file_output_median=file_out)
+        band_count = filters.generate_filter_file(file_input=file_in, file_output_median=file_out)
         if (not self.feature_names):
-            self.feature_names = (
-                ["median_band{}".format(i) for i in range(1, band_count+1)])
+            self.feature_names = (["median_band{}".format(i) for i in range(1, band_count+1)])
 
 
 class FilterGaussFeature(Feature):
@@ -81,11 +78,9 @@ class FilterGaussFeature(Feature):
 
     def execute(self, file_in, image):
         file_out = self.get_file_name(image)
-        band_count = filters.generate_filter_file(
-            file_input=file_in, file_output_gaussian=file_out)
+        band_count = filters.generate_filter_file(file_input=file_in, file_output_gaussian=file_out)
         if (not self.feature_names):
-            self.feature_names = (
-                ["gauss_band{}".format(i) for i in range(1, band_count+1)])
+            self.feature_names = (["gauss_band{}".format(i) for i in range(1, band_count+1)])
 
 
 class NdviFeature(Feature):
@@ -130,24 +125,20 @@ class DayFeature(Feature):
         # Create a new file
         dataset = gdal.Open(file_in, gdal.GA_ReadOnly)
         driver = gdal.GetDriverByName('GTiff')
-        output_dataset = driver.Create(
-            file_out, dataset.RasterXSize, dataset.RasterYSize,
-            2, gdal.GDT_Float32)
+        output_dataset = driver.Create(file_out, dataset.RasterXSize, dataset.RasterYSize, 2, gdal.GDT_Float32)
         output_dataset.SetProjection(dataset.GetProjectionRef())
         output_dataset.SetGeoTransform(dataset.GetGeoTransform())
 
         # Write a band with the day normalized for each pixel
-        band = np.full(
-            (dataset.RasterYSize, dataset.RasterXSize),
-            number_of_day_normalized)
+        band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_normalized)
         outband = output_dataset.GetRasterBand(1)
+        outband.SetDescription("day_normalized")
         outband.WriteArray(band)
 
         # Write a band with the day transformed for each pixel
-        band = np.full(
-            (dataset.RasterYSize, dataset.RasterXSize),
-            number_of_day_transform)
+        band = np.full((dataset.RasterYSize, dataset.RasterXSize), number_of_day_transform)
         outband = output_dataset.GetRasterBand(2)
+        outband.SetDescription("day_transform")
         outband.WriteArray(band)
 
 
@@ -156,8 +147,7 @@ class DayFeature(Feature):
         year = int(year)
         month = int(month)
         day = int(day)
-        number_of_day = (datetime.date(year, month, day) -
-                         datetime.date(year, 1, 1)).days + 1
+        number_of_day = (datetime.date(year, month, day) - datetime.date(year, 1, 1)).days + 1
         # If the image is from the northern hemisphere
         if (row < 60):
             number_of_day = (number_of_day + 182) % 365
@@ -188,8 +178,7 @@ class ImageFeature(Feature):
 
 
     def get_file_name(self, image):
-        # return os.path.join(image.path, "{}{}".format(image.base_name, ImageFeature.SUFFIX))
-        for file in os.listdir(image.path):
+       for file in os.listdir(image.path):
             if file.endswith(self.suffix):
                 return os.path.join(image.path, file)
 
@@ -198,8 +187,7 @@ class ImageFeature(Feature):
         if (not self.feature_names):
             file_features = self.get_file_name(image)
             dataset = gdal.Open(file_features, gdal.GA_ReadOnly)
-            self.feature_names = (
-                [dataset.GetRasterBand(i).GetDescription() for i in range(1, dataset.RasterCount+1)])
+            self.feature_names = ([dataset.GetRasterBand(i).GetDescription() for i in range(1, dataset.RasterCount+1)])
 
 
 class PlaceFeature(Feature):

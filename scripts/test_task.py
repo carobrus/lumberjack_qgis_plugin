@@ -4,8 +4,7 @@ from .train_task import TrainTask
 
 
 class TestTask(ClassificationTask):
-    def __init__(self, directory, classifier, testing_ratio,
-                 lumberjack_instance):
+    def __init__(self, directory, classifier, testing_ratio, lumberjack_instance):
         super().__init__("Lumberjack testing", QgsTask.CanCancel)
         self.directory = directory
         self.classifier = classifier
@@ -45,8 +44,7 @@ class TestTask(ClassificationTask):
             self.metrics = self.classifier.calculate_metrics()
 
             self.elapsed_time = time.time() - self.start_time
-            print("Finished training in {} seconds".format(
-                str(self.elapsed_time)))
+            print("Finished training in {} seconds".format(str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False
@@ -61,10 +59,7 @@ class TestTask(ClassificationTask):
         if result:
             QgsMessageLog.logMessage(
                 'Task "{name}" completed in {time} seconds\n' \
-                'Testing Directory: {td}'.format(
-                    name=self.description(),
-                    time=self.elapsed_time,
-                    td=self.directory),
+                'Testing Directory: {td}'.format(name=self.description(), time=self.elapsed_time, td=self.directory),
                 Lumberjack.MESSAGE_CATEGORY, Qgis.Success)
 
             self.li.notify_testing(
@@ -76,13 +71,10 @@ class TestTask(ClassificationTask):
                 QgsMessageLog.logMessage(
                     'Task "{name}" not successful but without '\
                     'exception (probably the task was manually '\
-                    'canceled by the user)'.format(
-                        name=self.description()),
+                    'canceled by the user)'.format(name=self.description()),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Warning)
             else:
                 QgsMessageLog.logMessage(
-                    'Task "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
+                    'Task "{name}" Exception: {exception}'.format(name=self.description(), exception=self.exception),
                     Lumberjack.MESSAGE_CATEGORY, Qgis.Critical)
                 raise self.exception
