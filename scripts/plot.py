@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QSizePolicy, QGridLayout
+from PyQt5.QtWidgets import QMessageBox, QWidget, QPushButton
+from PyQt5 import QtGui, QtCore
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
@@ -20,15 +21,31 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle(self.title)
         self.setMinimumSize(500, 500)
         self.resize(self.width, self.height)
-        # self.setFixedSize(self.width, self.height)
-        layout = QtGui.QVBoxLayout()
+        # main_layout = QtGui.QVBoxLayout()
         self.plot_canvas = PlotCanvas(self, feature_importances=self.feature_importances, labels=self.labels)
-        layout.addWidget(self.plot_canvas)
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-        self.show()
+        
+        self.button = QPushButton("")
+        self.button.setIcon(QtGui.QIcon(':/plugins/Lumberjack/sort.png'))
+        self.button.setIconSize(QtCore.QSize(40,40))
+        self.button.setFixedSize(QtCore.QSize(40,40))
 
+        self.button.clicked.connect(self.plot_canvas.plot)       
+
+        # main_layout.addWidget(self.plot_canvas)
+        # main_layout.addWidget(self.button, alignment=QtCore.Qt.AlignRight)
+        # widget = QWidget()
+        # widget.setLayout(main_layout)
+        # self.setCentralWidget(widget)
+
+        main_layout = QGridLayout()
+        main_layout.addWidget(self.plot_canvas, 0, 0, 1, 1)
+        main_layout.addWidget(self.button, 0, 0, 1, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        widget = QWidget()
+        widget.setLayout(main_layout)
+        self.setCentralWidget(widget)
+
+        self.show()
+    
 
 class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None, dpi=100, feature_importances=None, labels=None):
@@ -41,6 +58,7 @@ class PlotCanvas(FigureCanvas):
         self.feature_importances = feature_importances
         self.labels = labels
         # FigureCanvas.updateGeometry(self)
+        self.sorted = False
         self.plot()
         self.fig.tight_layout()
 
@@ -49,10 +67,16 @@ class PlotCanvas(FigureCanvas):
         data = self.feature_importances
         y = self.labels
         y_pos = np.arange(len(self.labels))
+        
+        if (self.sorted):
+            data, y = (list(t) for t in zip(*sorted(zip(data, y), reverse=True)))
+        self.sorted = not self.sorted
 
+        self.axes.clear()
         self.axes.barh(y_pos, data, align='center')
         self.axes.set_yticks(y_pos)
         self.axes.set_yticklabels(y)
         self.axes.invert_yaxis()
         self.axes.set_title('Features Importance')
         self.draw()
+

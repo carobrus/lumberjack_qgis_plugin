@@ -27,7 +27,6 @@ class TestTask(ClassificationTask):
             self.start_time = time.time()
 
             if self.without_ratio:
-                # Stack the features to be used
                 places = self.obtain_places(self.directory)
 
                 self.rasterize_vector_files(places)

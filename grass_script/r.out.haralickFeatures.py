@@ -111,7 +111,7 @@ def main():
 
 				if (full_path[-9:-5] == "band") and (not use_dem):
 					if (count == 1):
-						output_file = full_path[:-12] + "text.tif"
+						output_file = full_path[:-10] + "_text.tif"
 						print "Output File to be created: ", output_file
 					gscript.run_command('r.in.gdal', flags='k', input=full_path,
 										output='inputBands.{}'.format(count), overwrite=True)

@@ -24,8 +24,8 @@
 
 import os
 
-from PyQt5 import uic
-from PyQt5 import QtWidgets
+from PyQt5 import uic, QtCore
+from PyQt5 import QtWidgets, QtGui
 
 # This loads your .ui file so that PyQt can populate
 # your plugin with the elements from Qt Designer
@@ -43,3 +43,5 @@ class LumberjackDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        # self.pushButton_feature_importances.setIcon(QtGui.QIcon(':/plugins/Lumberjack/barchart.png'))
+        # self.pushButton_feature_importances.setIconSize(QtCore.QSize(40,40))

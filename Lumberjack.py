@@ -423,10 +423,11 @@ class Lumberjack:
         self.dlg.hide()
         self.create_features_array()
 
-        self.calculate_features_task = CalculateFeaturesTask(
-            directory = self.dlg.lineEdit_testingDirectory.text(),
-            features = self.features,
-            lumberjack_instance = self)
+        if (self.testing_ratio):
+            self.calculate_features_task = CalculateFeaturesTask(
+                directory = self.dlg.lineEdit_testingDirectory.text(),
+                features = self.features,
+                lumberjack_instance = self)
 
         self.test_task = TestTask(
             directory = self.dlg.lineEdit_testingDirectory.text(),
@@ -434,8 +435,10 @@ class Lumberjack:
             testing_ratio = self.testing_ratio,
             lumberjack_instance = self)
 
-        self.test_task.addSubTask(self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
+        if (self.testing_ratio):
+            self.test_task.addSubTask(self.calculate_features_task, [], QgsTask.ParentDependsOnSubTask)
         QgsApplication.taskManager().addTask(self.test_task)
+
 
 
     def predict(self):
