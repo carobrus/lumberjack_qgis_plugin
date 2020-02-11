@@ -39,7 +39,7 @@ class PlotWindow(QMainWindow):
 
         main_layout = QGridLayout()
         main_layout.addWidget(self.plot_canvas, 0, 0, 1, 1)
-        main_layout.addWidget(self.button, 0, 0, 1, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        main_layout.addWidget(self.button, 0, 0, 1, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
         widget = QWidget()
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)

@@ -43,7 +43,7 @@ class TestTask(ClassificationTask):
             self.metrics = self.classifier.calculate_metrics()
 
             self.elapsed_time = time.time() - self.start_time
-            print("Finished training in {} seconds".format(str(self.elapsed_time)))
+            print("Finished testing in {} seconds".format(str(self.elapsed_time)))
 
             if self.isCanceled():
                 return False

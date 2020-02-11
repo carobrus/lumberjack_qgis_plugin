@@ -247,6 +247,7 @@ class Lumberjack:
         file = filename[0]
         if file != "" :
             self.classifier.export_classifier(file)
+            self.dlg.plainTextEdit.appendPlainText("Exported classifier:\n{}".format(str(file)))
 
 
     def import_classifier(self):
@@ -258,6 +259,7 @@ class Lumberjack:
             self.dlg.pushButton_feature_importances.setEnabled(True)
             self.dlg.pushButton_testing.setEnabled(True)
             self.dlg.pushButton_prediction.setEnabled(True)
+            self.dlg.plainTextEdit.appendPlainText("Imported classifier:\n{}".format(str(file)))
 
 
     def graph_feature_importances(self):
@@ -368,7 +370,7 @@ class Lumberjack:
         self.dlg.hide()
         self.seasonal_analysis = SeasonalAnalysis(
             directory = self.dlg.lineEdit_directory_seasonal.text(),
-            feature = self.dlg.comboBox_features.currentIndex(),
+            feature = self.dlg.comboBox_features.currentIndex() + 1,
             lumberjack_instance = self)
         QgsApplication.taskManager().addTask(self.seasonal_analysis)
 
@@ -422,6 +424,8 @@ class Lumberjack:
     def test(self):
         self.dlg.hide()
         self.create_features_array()
+
+        self.testing_ratio = self.dlg.checkBox_testing_ratio.isChecked()
 
         if (self.testing_ratio):
             self.calculate_features_task = CalculateFeaturesTask(
