@@ -2,6 +2,10 @@
 
 A QGIS plugin to calculate features of images, classify and remove trees out of elevation maps
 
+Author: Carolina Bruscantini, Pablo Rinaldi and Lucas Lo Vercio
+bruscantinic@gmail.com
+[PLADEMA-UNICEN](http://www.pladema.net/)
+
 <!-- ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. -->
